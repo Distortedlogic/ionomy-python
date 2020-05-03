@@ -3,7 +3,7 @@ from setuptools import find_namespace_packages, setup
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-VERSION = '0.0.1'
+VERSION = '0.0.2'
 
 requires = [
     'Click',
@@ -12,11 +12,7 @@ requires = [
     'furl',
     'python-decouple',
 ]
-dev_requires = {
-    "dev": [
-        "pytest"
-    ]
-}
+dev_requires = {}
 
 entry_points = """
     [console_scripts]

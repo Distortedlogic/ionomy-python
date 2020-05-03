@@ -3,13 +3,13 @@ services:
     notebook-server:
         build:
             context: .
-            # dockerfile: Dockerfile
-            dockerfile: experimental.Dockerfile
+            dockerfile: Dockerfile
+            # dockerfile: experimental.Dockerfile
         container_name: notebook_server
         restart: unless-stopped
         command: jupyter lab
         volumes:
-            - ./:/notebooks
+            - ./notebooks:/notebooks
         env_file:
             - ./.env
         ports:

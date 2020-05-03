@@ -11,6 +11,5 @@ dependencies:
   - arrow
   - furl
   - python-decouple
-  - beem
 prefix: C:\Users\jerme\anaconda3\envs\ionomy
 

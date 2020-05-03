@@ -10,7 +10,18 @@ class IonPanda(Ionomy):
         Ionomy.__init__(self, api_key, api_secret)
 
     def markets(self) -> DataFrame:
-        return pd.DataFrame.from_records(super(IonPanda, self).markets())
+        return pd.DataFrame.from_records(
+            super(IonPanda, self).markets()
+        ).astype({
+            'market': 'str',
+            'title': 'str',
+            'currencyBase': 'str',
+            'currencyMarket': 'str',
+            'orderMinSize': 'float',
+            'buyFee': 'float',
+            'sellFee': 'float',
+            'inMaintenance': 'bool'
+        })
 
     def currencies(self) -> DataFrame:
         return pd.DataFrame.from_records(
@@ -81,7 +92,7 @@ class IonPanda(Ionomy):
             'bidsOpenOrders': 'int',
             'bidsLastPrice': 'float',
             'highestBid': 'float',
-            'askOpenOrders': 'int',
+            'asksOpenOrders': 'int',
             'asksLastPrice': 'float',
             'lowestAsk': 'float'
         })
