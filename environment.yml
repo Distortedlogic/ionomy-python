@@ -1,0 +1,16 @@
+name: ionomy
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.7
+  - anaconda
+  - requests
+  - wheel
+  - twine
+  - arrow
+  - furl
+  - python-decouple
+  - beem
+prefix: C:\Users\jerme\anaconda3\envs\ionomy
+

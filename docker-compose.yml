@@ -1,0 +1,16 @@
+version: '3.7'
+services:
+    notebook-server:
+        build:
+            context: .
+            # dockerfile: Dockerfile
+            dockerfile: experimental.Dockerfile
+        container_name: notebook_server
+        restart: unless-stopped
+        command: jupyter lab
+        volumes:
+            - ./:/notebooks
+        env_file:
+            - ./.env
+        ports:
+            - 8888:8888
