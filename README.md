@@ -61,7 +61,8 @@ ionomy = Ionomy(config('IONOMY_KEY'), config('IONOMY_SECRET'))
 `current_price = ionomy.get_spot_price()`
 
 
-# IonPanda - Returns Pandas Dataframes when applicable plus extra methods
+# IonPanda
+## Returns Pandas Dataframes when applicable plus extra methods
 ```
 from Ionomy import IonPanda
 from decouple import config
