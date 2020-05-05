@@ -11,6 +11,8 @@ requires = [
     'arrow',
     'furl',
     'python-decouple',
+    'pandas',
+    'pandas-ta'
 ]
 dev_requires = {}
 
