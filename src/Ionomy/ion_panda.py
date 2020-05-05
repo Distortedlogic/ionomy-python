@@ -3,11 +3,13 @@ from pandas.core.frame import DataFrame
 from typing import List, Union, Optional
 
 from .ionomy import Ionomy
+from .cc_ticker import CCTicker
+import arrow
 
-
-class IonPanda(Ionomy):
+class IonPanda(Ionomy, CCTicker):
     def __init__(self, api_key, api_secret):
         Ionomy.__init__(self, api_key, api_secret)
+        CCTicker.__init__(self)
 
     def markets(self) -> DataFrame:
         return pd.DataFrame.from_records(
@@ -38,45 +40,17 @@ class IonPanda(Ionomy):
         
     def order_book(self, market: str) -> DataFrame:
         ob = super(IonPanda, self).order_book(market)
-        bids, asks = pd.DataFrame.from_records(ob['bids']), pd.DataFrame.from_records(ob['asks'])
-        bids['type'], asks['type'] = 'bid', 'ask'
-        return pd.concat([bids, asks]).astype({'type': 'str', 'size': 'float', 'price': 'float'})
-
-    def max_bid(
-        self,
-        market: str,
-        size_min: Optional[float] = None,
-        size_max: Optional[float] = None
-    ) -> float:
-        order_book_pd = self.order_book(market)
-        order_book_pd = order_book_pd[order_book_pd['type']=='bid']
-        mask = [True] * len(order_book_pd)
-        if size_min and size_max:
-            mask = (order_book_pd['size']>=size_min) & (order_book_pd['size']<=size_max)
-        elif size_min:
-            mask = (order_book_pd['size']>=size_min)
-        elif size_max:
-            mask = (order_book_pd['size']<=size_max)
-        
-        return order_book_pd[mask]['price'].max()
-    
-    def min_ask(
-        self,
-        market: str,
-        size_min: Optional[float] = None,
-        size_max: Optional[float] = None
-    ) -> float:
-        order_book_pd = self.order_book(market)
-        order_book_pd = order_book_pd[order_book_pd['type']=='ask']
-        mask = [True] * len(order_book_pd)
-        if size_min and size_max:
-            mask = (order_book_pd['size']>=size_min) & (order_book_pd['size']<=size_max)
-        elif size_min:
-            mask = (order_book_pd['size']>=size_min)
-        elif size_max:
-            mask = (order_book_pd['size']<=size_max)
-        
-        return order_book_pd[mask]['price'].min()
+        bids = pd.DataFrame.from_records(ob['bids'])
+        asks = pd.DataFrame.from_records(ob['asks'])
+        bids['type'] = 'bid'
+        asks['type'] = 'ask'
+        return pd.concat(
+            [bids, asks]
+        ).astype({
+            'type': 'str',
+            'size': 'float',
+            'price': 'float'
+        })
 
     def market_summaries(self) -> DataFrame:
         return pd.DataFrame.from_records(
@@ -149,3 +123,18 @@ class IonPanda(Ionomy):
             'feeAmount': 'float',
             'createdAt': 'datetime64'
         })
+
+    def cc_ohlcv(self, crypto: str = 'HIVE', base: str = 'BTC') -> DataFrame:
+        df = pd.DataFrame.from_records(
+            super(IonPanda, self).cc_ohlcv(crypto, base)
+        ).drop(
+            axis=1,
+            columns=['conversionType', 'conversionSymbol']
+        ).rename(
+            columns={
+                'volumeFrom': f'volume{crypto.lower()}',
+                'volumeTo': f'volume'
+            }
+        )
+        df['date'] = df['time'].apply(lambda ts: arrow.get(ts).format('YYYY-MM-DD'))
+        return df
