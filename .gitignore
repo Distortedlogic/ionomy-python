@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+ion_trader.py
+
 # C extensions
 *.so
 
