@@ -12,7 +12,8 @@ requires = [
     'furl',
     'python-decouple',
     'pandas',
-    'pandas-ta'
+    'pandas-ta',
+    'websockets'
 ]
 dev_requires = {}
 
