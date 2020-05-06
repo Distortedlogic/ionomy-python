@@ -3,13 +3,11 @@ from pandas.core.frame import DataFrame
 from typing import List, Union, Optional
 
 from .ionomy import Ionomy
-from .cc_ticker import CCTicker
 import arrow
 
-class IonPanda(Ionomy, CCTicker):
+class IonPanda(Ionomy):
     def __init__(self, api_key, api_secret):
         Ionomy.__init__(self, api_key, api_secret)
-        CCTicker.__init__(self)
 
     def markets(self) -> DataFrame:
         return pd.DataFrame.from_records(
@@ -25,9 +23,9 @@ class IonPanda(Ionomy, CCTicker):
             'inMaintenance': 'bool'
         })
 
-    def currencies(self) -> DataFrame:
+    def cryptos(self) -> DataFrame:
         return pd.DataFrame.from_records(
-            super(IonPanda, self).currencies()
+            super(IonPanda, self).cryptos()
         ).astype({
             'currency': 'str',
             'title': 'str',
@@ -124,16 +122,15 @@ class IonPanda(Ionomy, CCTicker):
             'createdAt': 'datetime64'
         })
 
-    def cc_ohlcv(self, crypto: str = 'HIVE', base: str = 'BTC') -> DataFrame:
+    def ohlcv(self, crypto: str = "", base: str = "") -> DataFrame:
         df = pd.DataFrame.from_records(
-            super(IonPanda, self).cc_ohlcv(crypto, base)
+            super(IonPanda, self).ohlcv(self._cfg(crypto, "crypto"), self._cfg(base, "base"))
         ).drop(
-            axis=1,
             columns=['conversionType', 'conversionSymbol']
         ).rename(
             columns={
-                'volumeFrom': f'volume{crypto.lower()}',
-                'volumeTo': f'volume'
+                'volumefrom': f'volume{crypto.lower()}',
+                'volumeto': 'volume'
             }
         )
         df['date'] = df['time'].apply(lambda ts: arrow.get(ts).format('YYYY-MM-DD'))
