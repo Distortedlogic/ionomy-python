@@ -6,8 +6,28 @@ from .ionomy import Ionomy
 import arrow
 
 class IonPanda(Ionomy):
-    def __init__(self, api_key, api_secret):
-        Ionomy.__init__(self, api_key, api_secret)
+    def __init__(
+        self,
+        ion_api_key: str,
+        ion_api_secret: str,
+        cc_api_key: str = "",
+        crypto: str = "",
+        base: str = "",
+        time: str = "",
+        exchange: str = "",
+        market: str = ""
+    ) -> None:
+        Ionomy.__init__(
+            self,
+            ion_api_key,
+            ion_api_secret,
+            cc_api_key,
+            crypto,
+            base,
+            time,
+            exchange,
+            market
+        )
 
     def markets(self) -> DataFrame:
         return pd.DataFrame.from_records(
@@ -27,7 +47,7 @@ class IonPanda(Ionomy):
         return pd.DataFrame.from_records(
             super(IonPanda, self).cryptos()
         ).astype({
-            'currency': 'str',
+            'crypto': 'str',
             'title': 'str',
             'withdrawMinSize': 'float',
             'withdrawFee': 'float',
@@ -97,26 +117,26 @@ class IonPanda(Ionomy):
         return pd.DataFrame.from_records(
             super(IonPanda, self).balances()
         ).astype({
-            'currency': 'str',
+            'crypto': 'str',
             'available': 'float',
             'reserved': 'float'
         })
 
-    def deposit_history(self, currency: str) -> DataFrame:
+    def deposit_history(self, crypto: str) -> DataFrame:
         return pd.DataFrame.from_records(
-            super(IonPanda, self).deposit_history(currency)
+            super(IonPanda, self).deposit_history(crypto)
         ).astype({
-            'currency': 'str',
+            'crypto': 'str',
             'deposits': 'float'
         })
 
-    def withdrawal_history(self, currency: str) -> DataFrame:
+    def withdrawal_history(self, crypto: str) -> DataFrame:
         return pd.DataFrame.from_records(
-            super(IonPanda, self).withdrawal_history(currency)['withdrawals']
+            super(IonPanda, self).withdrawal_history(crypto)['withdrawals']
         ).astype({
             'transactionId': 'str',
             'state': 'str',
-            'currency': 'str',
+            'crypto': 'str',
             'amount': 'float',
             'feeAmount': 'float',
             'createdAt': 'datetime64'

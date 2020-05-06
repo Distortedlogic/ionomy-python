@@ -27,7 +27,7 @@ class IonTA(IonPanda):
         self.update(self.crypto, self.base)
 
     def update(self, crypto: str = 'HIVE', base: str = 'BTC'):
-        self.df = self.cc_ohlcv(crypto, base)
+        self.df = self.ohlcv(crypto, base)
 
     @staticmethod
     def _size_mask(

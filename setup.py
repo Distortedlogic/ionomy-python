@@ -36,7 +36,7 @@ setup(
     packages=find_namespace_packages(where='src', exclude=['docs', 'tests*']),
     install_requires=requires,
     extras_require=dev_requires,
-    package_dir={'': 'src'},
+    package_dir={'': 'packages'},
     keywords=['hive', 'ionomy', 'library', 'api', 'rpc'],
     classifiers=[
         'License :: OSI Approved :: MIT License',
