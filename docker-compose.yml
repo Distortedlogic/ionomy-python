@@ -9,7 +9,7 @@ services:
         restart: unless-stopped
         command: jupyter lab
         volumes:
-            - ./notebooks:/notebooks
+            - .:/notebooks
         env_file:
             - ./.env
         ports:
