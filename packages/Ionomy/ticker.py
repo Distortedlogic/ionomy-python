@@ -10,16 +10,8 @@ from .config import Config
 class Ticker(Config):
     _cc_client: Session = Session()
 
-    def __init__(
-        self,
-        cc_api_key: str = "",
-        crypto: str = "",
-        base: str = "",
-        time: str = "",
-        exchange: str = "",
-        market: str = ""
-    ) -> None:
-        Config.__init__(self, crypto, base, time, exchange, market)
+    def __init__(self, cc_api_key: str = "", **kwargs) -> None:
+        Config.__init__(self, **kwargs)
         self.cc_api_key = cc_api_key
 
     def _cc_request(self, endpoint: str, params: Dict[str, str]) -> Any:

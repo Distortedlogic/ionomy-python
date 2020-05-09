@@ -14,18 +14,8 @@ from .utils.decorators import currency_to_crypto
 class Ionomy(Ticker):
     _ion_client: Session = requests.Session()
 
-    def __init__(
-        self,
-        ion_api_key: str,
-        ion_api_secret: str,
-        cc_api_key: str = "",
-        crypto: str = "",
-        base: str = "",
-        time: str = "",
-        exchange: str = "",
-        market: str = ""
-    ) -> None:
-        Ticker.__init__(self, cc_api_key, crypto, base, time, exchange, market)
+    def __init__(self, ion_api_key: str, ion_api_secret: str, **kwargs) -> None:
+        Ticker.__init__(self, **kwargs)
         self.ion_api_key = ion_api_key
         self.ion_api_secret = ion_api_secret
         self.market_names = [data["market"] for data in self._ion_request('public/markets')]

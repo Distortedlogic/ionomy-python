@@ -6,42 +6,28 @@ from .ionomy import Ionomy
 import arrow
 
 class IonPanda(Ionomy):
-    def __init__(
-        self,
-        ion_api_key: str,
-        ion_api_secret: str,
-        cc_api_key: str = "",
-        crypto: str = "",
-        base: str = "",
-        time: str = "",
-        exchange: str = "",
-        market: str = ""
-    ) -> None:
-        Ionomy.__init__(
-            self,
-            ion_api_key,
-            ion_api_secret,
-            cc_api_key,
-            crypto,
-            base,
-            time,
-            exchange,
-            market
-        )
+    def __init__(self, raw: bool = False, **kwargs) -> None:
+        Ionomy.__init__(self, **kwargs)
+        self.raw = raw
 
-    def markets(self) -> DataFrame:
-        return pd.DataFrame.from_records(
-            super(IonPanda, self).markets()
-        ).astype({
-            'market': 'str',
-            'title': 'str',
-            'currencyBase': 'str',
-            'currencyMarket': 'str',
-            'orderMinSize': 'float',
-            'buyFee': 'float',
-            'sellFee': 'float',
-            'inMaintenance': 'bool'
-        })
+    def markets(self, raw: Optional[bool] = None) -> DataFrame:
+        if not isinstance(raw, bool):
+            raw = self.raw
+        if raw:
+            return super(IonPanda, self).markets()
+        else:
+            return pd.DataFrame.from_records(
+                super(IonPanda, self).markets()
+            ).astype({
+                'market': 'str',
+                'title': 'str',
+                'currencyBase': 'str',
+                'currencyMarket': 'str',
+                'orderMinSize': 'float',
+                'buyFee': 'float',
+                'sellFee': 'float',
+                'inMaintenance': 'bool'
+            })
 
     def cryptos(self) -> DataFrame:
         return pd.DataFrame.from_records(

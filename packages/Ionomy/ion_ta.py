@@ -4,27 +4,12 @@ import pandas as pd
 import pandas_ta as ta
 from pandas.core.frame import DataFrame, Series
 
-from Ionomy.ion_panda import IonPanda
-
+from .ion_panda import IonPanda
 
 class IonTA(IonPanda):
-    default_market = 'btc-hive'
-    default_crypto = 'hive'
-    default_base = 'btc'
 
-    def __init__(
-        self,
-        api_key: str,
-        api_secret: str,
-        market: str = '',
-        crypto: str = '',
-        base: str = ''
-    ) -> None:
-        IonPanda.__init__(self, api_key, api_secret)
-        self.market = market if market else self.default_market
-        self.crypto = crypto if crypto else self.default_crypto
-        self.base = base if base else self.default_base
-        self.update(self.crypto, self.base)
+    def __init__(self, **kwargs) -> None:
+        IonPanda.__init__(self, **kwargs)
 
     def update(self, crypto: str = 'HIVE', base: str = 'BTC'):
         self.df = self.ohlcv(crypto, base)
