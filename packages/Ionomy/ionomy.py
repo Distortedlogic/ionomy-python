@@ -11,6 +11,8 @@ from typing import Any, Dict, List, Optional, Union, Callable, Any
 from .ticker import Ticker
 from .utils.decorators import currency_to_crypto
 
+ION_HTTP = 'https://ionomy.com/api/v1/'
+
 class Ionomy(Ticker):
     _ion_client: Session = requests.Session()
 
@@ -21,7 +23,7 @@ class Ionomy(Ticker):
         self.market_names = [data["market"] for data in self._ion_request('public/markets')]
     
     def _get_signature(self, endpoint: str, params: dict, timestamp: str) -> str:
-        api_furl = furl('https://ionomy.com/api/v1/' + endpoint)
+        api_furl = furl(ION_HTTP + endpoint)
         api_furl.args = params
         url_ts = (api_furl.url + timestamp).encode('utf-8')
         return hmac.new(
@@ -37,7 +39,7 @@ class Ionomy(Ticker):
             'api-auth-token': self._get_signature(endpoint, params, timestamp)
         }
         response = self._ion_client.get(
-            'https://ionomy.com/api/v1/' + endpoint,
+            ION_HTTP + endpoint,
             params=params,
             headers=headers
         )

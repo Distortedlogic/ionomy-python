@@ -6,16 +6,10 @@ from .ionomy import Ionomy
 import arrow
 
 class IonPanda(Ionomy):
-    def __init__(self, raw: bool = False, **kwargs) -> None:
+    def __init__(self, **kwargs) -> None:
         Ionomy.__init__(self, **kwargs)
-        self.raw = raw
 
-    def markets(self, raw: Optional[bool] = None) -> DataFrame:
-        if not isinstance(raw, bool):
-            raw = self.raw
-        if raw:
-            return super(IonPanda, self).markets()
-        else:
+    def markets(self) -> DataFrame:
             return pd.DataFrame.from_records(
                 super(IonPanda, self).markets()
             ).astype({

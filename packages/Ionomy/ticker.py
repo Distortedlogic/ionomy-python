@@ -7,6 +7,9 @@ from requests import Session
 
 from .config import Config
 
+CC_HTTP = "https://min-api.cryptocompare.com/data"
+CC_WSS = "wss://streamer.cryptocompare.com/v2?api_key="
+
 class Ticker(Config):
     _cc_client: Session = Session()
 
@@ -15,10 +18,7 @@ class Ticker(Config):
         self.cc_api_key = cc_api_key
 
     def _cc_request(self, endpoint: str, params: Dict[str, str]) -> Any:
-        return self._cc_client.get(
-            "https://min-api.cryptocompare.com/data" + endpoint,
-            params=params
-        ).json()
+        return self._cc_client.get(CC_HTTP + endpoint, params=params).json()
 
     def _params(self, crypto: str, base: str, tsyms: bool = True) -> Dict[str, str]:
         return {
@@ -47,13 +47,12 @@ class Ticker(Config):
     async def _stream(self, exchange: str, crypto: str, base: str):
         if not self.cc_api_key:
             raise Exception(f'Streamer requires a crypto compare api key at {self.__name__} initialization')
-        async with websockets.connect(
-            "wss://streamer.cryptocompare.com/v2?api_key=" + self.cc_api_key
-        ) as websocket:
-            await websocket.send(json.dumps({
-                "action": "SubAdd",
-                "subs": [f"8~{exchange}~{crypto}~{base}"],
-            }))
+        request = json.dumps({
+            "action": "SubAdd",
+            "subs": [f"8~{exchange}~{crypto}~{base}"],
+        })
+        async with websockets.connect(CC_WSS + self.cc_api_key) as websocket:
+            await websocket.send(request)
             while True:
                 try:
                     data = await websocket.recv()
