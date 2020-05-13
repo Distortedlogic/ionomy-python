@@ -1,9 +1,7 @@
 import pandas as pd
 from pandas.core.frame import DataFrame
-from typing import List, Union, Optional
 
 from .ionomy import Ionomy
-import arrow
 
 class IonPanda(Ionomy):
     def __init__(self, **kwargs) -> None:
@@ -23,11 +21,11 @@ class IonPanda(Ionomy):
                 'inMaintenance': 'bool'
             })
 
-    def cryptos(self) -> DataFrame:
+    def currencies(self) -> DataFrame:
         return pd.DataFrame.from_records(
-            super(IonPanda, self).cryptos()
+            super(IonPanda, self).currencies()
         ).astype({
-            'crypto': 'str',
+            'currency': 'str',
             'title': 'str',
             'withdrawMinSize': 'float',
             'withdrawFee': 'float',
@@ -97,41 +95,27 @@ class IonPanda(Ionomy):
         return pd.DataFrame.from_records(
             super(IonPanda, self).balances()
         ).astype({
-            'crypto': 'str',
+            'currency': 'str',
             'available': 'float',
             'reserved': 'float'
         })
 
-    def deposit_history(self, crypto: str) -> DataFrame:
+    def deposit_history(self, currency: str) -> DataFrame:
         return pd.DataFrame.from_records(
-            super(IonPanda, self).deposit_history(crypto)
+            super(IonPanda, self).deposit_history(currency)
         ).astype({
-            'crypto': 'str',
+            'currency': 'str',
             'deposits': 'float'
         })
 
-    def withdrawal_history(self, crypto: str) -> DataFrame:
+    def withdrawal_history(self, currency: str) -> DataFrame:
         return pd.DataFrame.from_records(
-            super(IonPanda, self).withdrawal_history(crypto)['withdrawals']
+            super(IonPanda, self).withdrawal_history(currency)['withdrawals']
         ).astype({
             'transactionId': 'str',
             'state': 'str',
-            'crypto': 'str',
+            'currency': 'str',
             'amount': 'float',
             'feeAmount': 'float',
             'createdAt': 'datetime64'
         })
-
-    def ohlcv(self, crypto: str = "", base: str = "") -> DataFrame:
-        df = pd.DataFrame.from_records(
-            super(IonPanda, self).ohlcv(self._cfg(crypto, "crypto"), self._cfg(base, "base"))
-        ).drop(
-            columns=['conversionType', 'conversionSymbol']
-        ).rename(
-            columns={
-                'volumefrom': f'volume{crypto.lower()}',
-                'volumeto': 'volume'
-            }
-        )
-        df['date'] = df['time'].apply(lambda ts: arrow.get(ts).format('YYYY-MM-DD'))
-        return df
