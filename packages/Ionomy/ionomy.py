@@ -105,8 +105,12 @@ class Ionomy:
     def deposit_history(self, currency: str) -> list:
         return self._request('account/deposit-history', {'currency': currency})
 
+    def withdraw(self, currency, amount, address):
+        params = {"currency": currency, "amount": amount, "address": address}
+        return self._request('account/withdraw', params)
+
     def withdrawal_history(self, currency: str) -> dict:
         return self._request('account/withdrawal-history', {'currency': currency})
 
-    def get_order_status(self, orderId: str) -> dict:
+    def order_status(self, orderId: str) -> dict:
         return self._request('account/order', {'orderId': orderId})
