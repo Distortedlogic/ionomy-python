@@ -7,7 +7,7 @@ from furl import furl
 from typing import Any, Dict, List, Optional, Union
 from requests import Session
 
-HTTP = " https://api.bittrex.com/api/v1.1"
+HTTP = "https://api.bittrex.com/api/v1.1"
 headers = {"content-type": "application/json"}
 
 class BitTrex:
@@ -15,7 +15,6 @@ class BitTrex:
         self.api_key = api_key
         self.secret_key = secret_key
         self._client: Session = Session()
-        self._params = {"apikey": self.api_key}
 
     def _get_signature(self, endpoint: str, params: Optional[Dict[str, str]]) -> str:
         api_furl = furl(HTTP + endpoint)
@@ -27,7 +26,7 @@ class BitTrex:
         ).hexdigest()
 
     def _request(self, endpoint: str, params: Optional[Dict[str, str]] = {}) -> Any:
-        self._params["nonce"] = str(arrow.utcnow().timestamp)
+        params = {**params, "apikey": self.api_key, "nonce": str(arrow.utcnow().timestamp)}
         headers["apisign"] = self._get_signature(endpoint, params)
         resp = self._client.get(HTTP + endpoint, params=params, headers=headers).json()
         if not resp["success"]:
