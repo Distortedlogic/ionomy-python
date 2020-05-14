@@ -1,3 +1,4 @@
 {
-    "python.pythonPath": "C:\\Users\\jerme\\anaconda3\\envs\\ionomy\\python.exe"
+    "python.pythonPath": "C:\\Users\\jerme\\anaconda3\\envs\\ionomy\\python.exe",
+    "restructuredtext.confPath": "${workspaceFolder}\\docs"
 }

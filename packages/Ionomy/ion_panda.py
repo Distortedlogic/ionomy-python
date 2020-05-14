@@ -4,8 +4,8 @@ from pandas.core.frame import DataFrame
 from .ionomy import Ionomy
 
 class IonPanda(Ionomy):
-    def __init__(self, **kwargs) -> None:
-        Ionomy.__init__(self, **kwargs)
+    def __init__(self, api_key: str, api_secret: str) -> None:
+        Ionomy.__init__(self, api_key, api_secret)
 
     def markets(self) -> DataFrame:
             return pd.DataFrame.from_records(
@@ -79,8 +79,19 @@ class IonPanda(Ionomy):
         })
 
     def open_orders(self, market: str) -> DataFrame:
+        data = super(IonPanda, self).open_orders(market)
+        if not data:
+            return pd.DataFrame(data={
+                'orderId': [],
+                'market': [],
+                'type': [],
+                'amount': [],
+                'price': [],
+                'filled': [],
+                'createdAt': []
+            })
         return pd.DataFrame.from_records(
-            super(IonPanda, self).open_orders(market)
+            data
         ).astype({
             'orderId': 'str',
             'market': 'str',
@@ -92,8 +103,15 @@ class IonPanda(Ionomy):
         })
 
     def balances(self) -> DataFrame:
+        data = super(IonPanda, self).balances()
+        if not data:
+            return pd.DataFrame(data={
+                'currency': [],
+                'available': [],
+                'reserved': []
+            })
         return pd.DataFrame.from_records(
-            super(IonPanda, self).balances()
+            data
         ).astype({
             'currency': 'str',
             'available': 'float',
@@ -101,16 +119,33 @@ class IonPanda(Ionomy):
         })
 
     def deposit_history(self, currency: str) -> DataFrame:
+        data = super(IonPanda, self).deposit_history(currency)
+        if not data:
+            return pd.DataFrame(data={
+                'currency': [],
+                'deposits': []
+            })
         return pd.DataFrame.from_records(
-            super(IonPanda, self).deposit_history(currency)
+            data
         ).astype({
             'currency': 'str',
             'deposits': 'float'
         })
 
     def withdrawal_history(self, currency: str) -> DataFrame:
+        data = super(IonPanda, self).withdrawal_history(currency)['withdrawals']
+        if not data:
+            return pd.DataFrame(data={
+                'transactionId': [],
+                'state': [],
+                'currency': [],
+                'amount': [],
+                'price': [],
+                'feeAmount': [],
+                'createdAt': []
+            })
         return pd.DataFrame.from_records(
-            super(IonPanda, self).withdrawal_history(currency)['withdrawals']
+            data
         ).astype({
             'transactionId': 'str',
             'state': 'str',

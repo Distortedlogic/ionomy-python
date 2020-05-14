@@ -1,6 +1,7 @@
 import arrow
 import hashlib
 import hmac
+import requests
 
 from furl import furl
 
@@ -25,7 +26,7 @@ class BitTrex:
             hashlib.sha512
         ).hexdigest()
 
-    def _request(self, endpoint: str, params: Optional[Dict[str, str]] = {}) -> Any:
+    def _request(self, endpoint: str, params: dict={}) -> Any:
         params = {**params, "apikey": self.api_key, "nonce": str(arrow.utcnow().timestamp)}
         headers["apisign"] = self._get_signature(endpoint, params)
         resp = self._client.get(HTTP + endpoint, params=params, headers=headers).json()
@@ -45,13 +46,13 @@ class BitTrex:
     def market_summaries(self) -> List[Dict[str, Union[bool, str, int, float, None]]]:
         return self._request("/public/getmarketsummaries")
 
-    def market_summary(self, market: str):
-        return self._request("/public/getmarketsummary", {"market": market})
+    def market_summary(self, market: str) -> dict:
+        return self._request("/public/getmarketsummary", {"market": market})[0]
 
-    def order_book(self, market: str):
+    def order_book(self, market: str) -> Dict[str, List[Dict[str, Any]]]:
         return self._request("/public/getorderbook", {"market": market, "type": "both"})
 
-    def market_history(self, market: str):
+    def market_history(self, market: str) -> List[Dict[str, Any]]:
         return self._request("/public/getmarkethistory", {"market": market})
 
     def buy_limit(
@@ -90,10 +91,10 @@ class BitTrex:
     def open_orders(self, market: str):
         return self._request("/market/getopenorders", {"market": market})
 
-    def balances(self):
+    def balances(self) -> List[Dict[str, Any]]:
         return self._request("/account/getbalances")
 
-    def balance(self, currency: str):
+    def balance(self, currency: str) -> dict:
         return self._request("/account/getbalance", {"currency": currency})
 
     def deposit_address(self, currency: str):
@@ -112,7 +113,7 @@ class BitTrex:
     def get_order(self, uuid: str):
         return self._request("/account/getorder", {"uuid": uuid})
 
-    def order_history(self):
+    def order_history(self) -> List[Dict[str, Any]]:
         return self._request("/account/getorderhistory")
 
     def withdrawal_history(self, currency: Optional[str]):
@@ -126,3 +127,14 @@ class BitTrex:
         if currency:
             params["currency"] = currency
         return self._request("/account/getdeposithistory", params)
+
+    def ohlcv(self, currency: str, base: str, time: str) -> list:
+        if time not in ["minute", "hour", "day"]:
+            raise Exception('time must be minute, hour, or day')
+        HTTP = "https://min-api.cryptocompare.com/data"
+        params = {"fsym": currency, "tsym": base, "e": "BitTrex"}
+        resp = requests.get(HTTP + f"/v2/histo{time}", params=params).json()
+        if resp["Response"] == "Success":
+            return resp["Data"]["Data"]
+        else:
+            raise Exception(resp["Message"])
