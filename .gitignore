@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 
 ai/
+dataset/
 
 # C extensions
 *.so

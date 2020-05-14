@@ -12,6 +12,8 @@ HTTP = "https://api.bittrex.com/api/v1.1"
 headers = {"content-type": "application/json"}
 
 class BitTrex:
+    """BitTrex API Wrapper in Python
+    """
     def __init__(self, api_key: str, secret_key: str) -> None:
         self.api_key = api_key
         self.secret_key = secret_key
