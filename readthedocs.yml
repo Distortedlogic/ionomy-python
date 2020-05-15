@@ -1,6 +1,6 @@
 name: ionomy-python
 type: sphinx
-requirements_file: requirements.txt
+requirements_file: docs/requirements.txt
 python:
   version: 3.7
-  setup_py_install: true
+  setup_py_install: false
