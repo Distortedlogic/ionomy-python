@@ -1,17 +1,34 @@
 Welcome to ionomy-python's documentation!
 =========================================
 
+.. image:: _static/ion.png
+   :width: 600 px
+   :alt: Ionomy
+   :align: center
+
+General
+-------
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :maxdepth: 1
 
-   bitpanda.ipynb
-   :ref:`notebooks/bitpanda.ipynb`
+   installation
+   modules
 
-Indices and tables
-==================
+Classes
+-------
+.. toctree::
+   :maxdepth: 1
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   auto/BitTrex
+   auto/BitPanda
+   auto/Ionomy
+   auto/IonPanda
 
+Misc
+-------
+.. toctree::
+   :maxdepth: 1
+
+   contribute
+   support
+   indices
