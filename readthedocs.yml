@@ -3,4 +3,4 @@ type: sphinx
 requirements_file: docs/requirements.txt
 python:
   version: 3.7
-  setup_py_install: false
+  setup_py_install: true
