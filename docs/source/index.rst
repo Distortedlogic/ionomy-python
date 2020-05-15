@@ -12,6 +12,7 @@ General
    :maxdepth: 1
 
    installation
+   tutorials
    modules
 
 Classes
