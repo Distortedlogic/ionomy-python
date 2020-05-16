@@ -1,7 +1,7 @@
 BitTrex
 =======
 
-.. automodule:: Ionomy.BitTrex
+.. autoclass:: Ionomy.BitTrex
     :members:
     :undoc-members:
     :show-inheritance:

@@ -11,6 +11,12 @@ from typing import Any, Dict, List, Optional, Union, Callable, Any
 ION_HTTP = 'https://ionomy.com/api/v1/'
 
 class Ionomy:
+    """Base Ionomy API Wrapper
+
+    Arguments:
+            api_key {str}
+            api_secret {str}
+    """
     def __init__(self, api_key: str, api_secret: str) -> None:
         self.api_key = api_key
         self.api_secret = api_secret
@@ -42,22 +48,22 @@ class Ionomy:
             raise Exception(data['message'])
         return data['data']
 
-    def markets(self) -> List[Dict[str, Any]]:
+    def markets(self) -> List[Dict[str, Union[str, float, bool]]]:
         return self._request('public/markets')
 
-    def currencies(self) -> list:
+    def currencies(self) -> List[Dict[str, Union[str, bool, int, float]]]:
         return self._request('public/currencies')
         
-    def order_book(self, market: str) -> dict:
+    def order_book(self, market: str) -> Dict[str, List[Dict[str, float]]]:
         return self._request('public/orderbook', {'market': market, 'type': 'both'})
 
-    def market_summaries(self) -> list:
+    def market_summaries(self) -> List[Dict[str, Union[str, int, float]]]:
         return self._request('public/markets-summaries')
 
-    def market_summary(self, market: str) -> dict:
+    def market_summary(self, market: str) -> Dict[str, Union[str, int, float]]:
         return self._request('public/market-summary', {'market': market})
 
-    def market_history(self, market: str) -> list:
+    def market_history(self, market: str) -> List[Dict[str, Union[str, float]]]:
         return self._request('public/market-history', {'market': market})
 
     def limit_buy(
@@ -90,27 +96,27 @@ class Ionomy:
         self._request('market/cancel-order', {'orderId': orderId})
         return True
 
+    def order_status(self, orderId: str) -> dict:
+        return self._request('account/order', {'orderId': orderId})
+
     def open_orders(self, market: str) -> list:
         return self._request('market/open-orders', {'market': market} )
 
-    def balances(self) -> list:
+    def balances(self) -> List[Dict[str, Union[str, float]]]:
         return self._request('account/balances')
 
-    def balance(self, currency: str) -> dict:
+    def balance(self, currency: str) -> Dict[str, Union[str, float]]:
         return self._request('account/balance', {'currency': currency} )
 
-    def deposit_address(self, currency: str) -> dict:
+    def deposit_address(self, currency: str) -> Dict[str, str]:
         return self._request('account/deposit-address', {'currency': currency})
 
     def deposit_history(self, currency: str) -> list:
-        return self._request('account/deposit-history', {'currency': currency})
+        return self._request('account/deposit-history', {'currency': currency})["deposits"]
 
     def withdraw(self, currency, amount, address):
         params = {"currency": currency, "amount": amount, "address": address}
         return self._request('account/withdraw', params)
 
-    def withdrawal_history(self, currency: str) -> dict:
-        return self._request('account/withdrawal-history', {'currency': currency})
-
-    def order_status(self, orderId: str) -> dict:
-        return self._request('account/order', {'orderId': orderId})
+    def withdrawal_history(self, currency: str) -> List[Dict[str, Union[str, float]]]:
+        return self._request('account/withdrawal-history', {'currency': currency})['withdrawals']

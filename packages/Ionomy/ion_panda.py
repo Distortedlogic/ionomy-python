@@ -4,22 +4,28 @@ from pandas.core.frame import DataFrame
 from .ionomy import Ionomy
 
 class IonPanda(Ionomy):
+    """Pandas DataFrame Wrapper for Ionomy Base Class
+
+    Arguments:
+        api_key {str} -- Ionomy API key
+        api_secret {str} -- Ionomy API Secret
+    """
     def __init__(self, api_key: str, api_secret: str) -> None:
         Ionomy.__init__(self, api_key, api_secret)
 
     def markets(self) -> DataFrame:
-            return pd.DataFrame.from_records(
-                super(IonPanda, self).markets()
-            ).astype({
-                'market': 'str',
-                'title': 'str',
-                'currencyBase': 'str',
-                'currencyMarket': 'str',
-                'orderMinSize': 'float',
-                'buyFee': 'float',
-                'sellFee': 'float',
-                'inMaintenance': 'bool'
-            })
+        return pd.DataFrame.from_records(
+            super(IonPanda, self).markets()
+        ).astype({
+            'market': 'str',
+            'title': 'str',
+            'currencyBase': 'str',
+            'currencyMarket': 'str',
+            'orderMinSize': 'float',
+            'buyFee': 'float',
+            'sellFee': 'float',
+            'inMaintenance': 'bool'
+        })
 
     def currencies(self) -> DataFrame:
         return pd.DataFrame.from_records(
@@ -133,7 +139,7 @@ class IonPanda(Ionomy):
         })
 
     def withdrawal_history(self, currency: str) -> DataFrame:
-        data = super(IonPanda, self).withdrawal_history(currency)['withdrawals']
+        data = super(IonPanda, self).withdrawal_history(currency)
         if not data:
             return pd.DataFrame(data={
                 'transactionId': [],
