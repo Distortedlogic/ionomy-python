@@ -14,8 +14,8 @@ class Ionomy:
     """Base Ionomy API Wrapper
 
     Arguments:
-            api_key {str}
-            api_secret {str}
+        api_key {str}
+        api_secret {str}
     """
     def __init__(self, api_key: str, api_secret: str) -> None:
         self.api_key = api_key

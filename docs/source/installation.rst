@@ -2,7 +2,8 @@ Installation
 ============
 The minimal working python version is 3.7.x
     
-Install ionomy-python with pip:
+Install with pip
+----------------
 
 .. code:: bash
 
@@ -20,10 +21,15 @@ but possibly non-compiling version::
 
     git clone https://github.com/Distortedlogic/ionomy-python.git
     cd ionomy-python
+
+then
+
+.. code:: bash
+
     python setup.py build
-    
     python setup.py install
 
-    or::
+or::
+
     pip install -e .
     

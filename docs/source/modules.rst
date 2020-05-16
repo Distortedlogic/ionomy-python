@@ -1,9 +1,6 @@
 Modules
 =======
 
-ionomy-python Modules
----------------------
-
 .. toctree::
     :maxdepth: 1
 

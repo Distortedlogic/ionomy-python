@@ -6,7 +6,7 @@ We welcome your contributions to our project.
 Repository
 ----------
 
-The repository of beem is currently located at:
+The repository of ionomy-python is currently located at:
 
     https://github.com/Distortedlogic/ionomy-python
 
@@ -23,9 +23,9 @@ How to Contribute
 -----------------
 
 0. Familiarize yourself with `contributing on github <https://guides.github.com/activities/contributing-to-open-source/>`_
-1. Fork or branch from the master.
+1. Fork or branch from the develop branch.
 2. Create commits following the commit style
-3. Start a pull request to the master branch
+3. Start a pull request to the develop branch
 4. Wait for a @distortedlogic or another member to review
 
 Issues
@@ -46,8 +46,11 @@ submitting patches and additions. In general, we follow the
 4. **Push** your work back up to your fork
 5. Submit a **Pull request** so that we can review your changes
 
+.. note:: Be sure to merge the latest from "develop" before making a pull
+    request!
+
 Copyright and Licensing
 -----------------------
 
-This library is open sources under the MIT license. We require your to
+This library is open sources under the MIT license. We require you to
 release your code under that license as well.
