@@ -52,7 +52,7 @@ class BitTrex:
     def market_summaries(self) -> List[Dict[str, Union[bool, str, int, float, None]]]:
         return self._request("/public/getmarketsummaries")
 
-    def market_summary(self, market: str) -> dict:
+    def market_summary(self, market: str) -> Dict[str, Union[str, int, float]]:
         return self._request("/public/getmarketsummary", {"market": market})[0]
 
     def order_book(self, market: str) -> Dict[str, List[Dict[str, Any]]]:
@@ -91,16 +91,16 @@ class BitTrex:
         }
         return self._request("/market/selllimit", params)["uuid"]
 
-    def cancel(self, uuid: str) -> str:
-        return self._request("/market/cancel", {"uuid": uuid})["uuid"]
+    def cancel(self, uuid: str) -> bool:
+        return True if not self._request("/market/cancel", {"uuid": uuid}) else False
 
-    def open_orders(self, market: str):
+    def open_orders(self, market: str) -> List[Dict[str, Union[str, float, bool, None]]]:
         return self._request("/market/getopenorders", {"market": market})
 
-    def balances(self) -> List[Dict[str, Any]]:
+    def balances(self) -> List[Dict[str, Union[str, float, None]]]:
         return self._request("/account/getbalances")
 
-    def balance(self, currency: str) -> dict:
+    def balance(self, currency: str) -> List[Dict[str, Union[str, float, None]]]:
         return self._request("/account/getbalance", {"currency": currency})
 
     def deposit_address(self, currency: str):
@@ -122,21 +122,21 @@ class BitTrex:
     def order_history(self) -> List[Dict[str, Any]]:
         return self._request("/account/getorderhistory")
 
-    def withdrawal_history(self, currency: Optional[str]):
+    def withdrawal_history(self, currency: str) -> List[Dict[str, Union[str, bool, float, None]]]:
         params = {}
         if currency:
             params["currency"] = currency
         return self._request("/account/getwithdrawalhistory", params)
 
-    def deposit_history(self, currency: Optional[str]):
+    def deposit_history(self, currency: str) -> List[Dict[str, Union[str, int, float, None]]]:
         params = {}
         if currency:
             params["currency"] = currency
         return self._request("/account/getdeposithistory", params)
 
-    def ohlcv(self, currency: str, base: str, time: str) -> list:
+    def ohlcv(self, currency: str, base: str, time: str) -> List[Dict[str, Union[str, int, float]]]:
         if time not in ["minute", "hour", "day"]:
-            raise Exception('time must be minute, hour, or day')
+            raise Exception('time must be "minute", "hour", or "day"')
         HTTP = "https://min-api.cryptocompare.com/data"
         params = {"fsym": currency, "tsym": base, "e": "BitTrex"}
         resp = requests.get(HTTP + f"/v2/histo{time}", params=params).json()

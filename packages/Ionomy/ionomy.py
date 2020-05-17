@@ -97,11 +97,11 @@ class Ionomy:
         self._request('market/cancel-order', {'orderId': orderId})
         return True
 
-    def order_status(self, orderId: str) -> dict:
+    def order_status(self, orderId: str) -> Dict[str, Union[str, None]]:
         return self._request('account/order', {'orderId': orderId})
 
-    def open_orders(self, market: str) -> list:
-        return self._request('market/open-orders', {'market': market} )
+    def open_orders(self, market: str) -> List[Dict[str, str]]:
+        return self._request('market/open-orders', {'market': market})
 
     def balances(self) -> List[Dict[str, Union[str, float]]]:
         return self._request('account/balances')
