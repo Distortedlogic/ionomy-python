@@ -6,6 +6,12 @@ from .bittrex import BitTrex
 
 
 class BitPanda(BitTrex):
+    """Pandas DataFrame Wrapper for BitTrex Base Class
+
+    Arguments:
+        api_key {str} -- BitTrex API Key
+        secret_key {str} -- BitTrex API Secret
+    """
     def __init__(self, api_key: str, secret_key: str) -> None:
         BitTrex.__init__(self, api_key, secret_key)
 

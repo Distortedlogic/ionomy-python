@@ -12,7 +12,11 @@ HTTP = "https://api.bittrex.com/api/v1.1"
 headers = {"content-type": "application/json"}
 
 class BitTrex:
-    """BitTrex API Wrapper in Python
+    """BitTrex API Wrapper
+
+    Arguments:
+        api_key {str} -- BitTrex API Key
+        secret_key {str} -- BitTrex API Secret
     """
     def __init__(self, api_key: str, secret_key: str) -> None:
         self.api_key = api_key

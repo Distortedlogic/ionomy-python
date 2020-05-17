@@ -14,9 +14,10 @@ class Ionomy:
     """Base Ionomy API Wrapper
 
     Arguments:
-        api_key {str}
-        api_secret {str}
+        api_key {str} -- Ionomy API key
+        api_secret {str} -- Ionomy API Secret
     """
+
     def __init__(self, api_key: str, api_secret: str) -> None:
         self.api_key = api_key
         self.api_secret = api_secret
@@ -111,7 +112,7 @@ class Ionomy:
     def deposit_address(self, currency: str) -> Dict[str, str]:
         return self._request('account/deposit-address', {'currency': currency})
 
-    def deposit_history(self, currency: str) -> list:
+    def deposit_history(self, currency: str) -> List[Dict[str, Union[str, float]]]:
         return self._request('account/deposit-history', {'currency': currency})["deposits"]
 
     def withdraw(self, currency, amount, address):

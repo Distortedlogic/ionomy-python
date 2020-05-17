@@ -6,5 +6,6 @@ Modules
 
     auto/BitTrex
     auto/BitPanda
+    auto/BitTA
     auto/Ionomy
     auto/IonPanda

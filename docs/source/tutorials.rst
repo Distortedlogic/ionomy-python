@@ -6,5 +6,6 @@ Tutorials
 
     notebooks/bittrex.ipynb
     notebooks/bitpanda.ipynb
+    notebooks/bitta.ipynb
     notebooks/ionomy.ipynb
     notebooks/ionpanda.ipynb
