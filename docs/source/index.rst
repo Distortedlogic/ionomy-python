@@ -6,6 +6,13 @@ Welcome to ionomy-python's documentation!
    :alt: Ionomy
    :align: center
 
+Quick Start
+-----------
+.. toctree::
+   :maxdepth: 1
+
+   quickstart
+
 General
 -------
 .. toctree::

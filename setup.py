@@ -3,7 +3,7 @@ from setuptools import find_namespace_packages, setup
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-VERSION = '0.0.2'
+VERSION = '0.0.4'
 
 requires = [
     'Click',
@@ -33,7 +33,7 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     python_requires='>=3.6',
-    packages=find_namespace_packages(where='src', exclude=['docs', 'tests*']),
+    packages=find_namespace_packages(where='packages', exclude=['docs', 'tests*']),
     install_requires=requires,
     extras_require=dev_requires,
     package_dir={'': 'packages'},
