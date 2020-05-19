@@ -3,7 +3,7 @@ from setuptools import find_namespace_packages, setup
 with open("README.rst", "r") as fh:
     long_description = fh.read()
 
-VERSION = '0.0.4'
+VERSION = '0.0.6'
 
 requires = [
     'Click',
@@ -12,8 +12,7 @@ requires = [
     'furl',
     'python-decouple',
     'pandas',
-    'pandas-ta',
-    'websockets'
+    'pandas-ta'
 ]
 dev_requires = {}
 
@@ -33,10 +32,10 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     python_requires='>=3.6',
-    packages=find_namespace_packages(where='packages', exclude=['docs', 'tests*']),
+    packages=find_namespace_packages(where='src', exclude=['docs', 'tests*']),
     install_requires=requires,
     extras_require=dev_requires,
-    package_dir={'': 'packages'},
+    package_dir={'': 'src'},
     keywords=['hive', 'ionomy', 'library', 'api', 'rpc'],
     classifiers=[
         'License :: OSI Approved :: MIT License',

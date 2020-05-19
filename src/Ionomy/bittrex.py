@@ -138,7 +138,7 @@ class BitTrex:
         if time not in ["minute", "hour", "day"]:
             raise Exception('time must be "minute", "hour", or "day"')
         HTTP = "https://min-api.cryptocompare.com/data"
-        params = {"fsym": currency, "tsym": base, "e": "BitTrex"}
+        params = {"fsym": currency, "tsym": base, "e": "BitTrex", "limit": 2000}
         resp = requests.get(HTTP + f"/v2/histo{time}", params=params).json()
         if resp["Response"] == "Success":
             return resp["Data"]["Data"]
