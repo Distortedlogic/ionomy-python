@@ -5,4 +5,7 @@ matplotlib == 3.1.3
 alphaVantage-api
 bayesian-optimization
 seaborn
+sqlalchemy
+tensorflow
+keras
 a
