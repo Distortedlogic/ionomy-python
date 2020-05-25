@@ -8,62 +8,61 @@ from pandas.core.series import Series
 
 from .strategy import Deep_Evolution_Strategy
 from .model import Model
+from .environment import Environment
 
 FEE_RATE = 0.003
 
 class Agent:
     def __init__(
         self,
-        df: DataFrame,
+        ohlcv_df: DataFrame,
+        window_size: int,
+        num_layers: int,
+        layer_size: int,
+        output_size: int,
         population_size: int,
         sigma: float,
         learning_rate: float,
-        model: Model,
         initial_capital: float,
-        max_buy,
-        max_sell,
-        skip,
-        window_size,
+        max_buy: int,
+        max_sell: int
     ):
         self.window_size = window_size
-        self.skip = skip
-        self.POPULATION_SIZE = population_size
-        self.SIGMA = sigma
-        self.LEARNING_RATE = learning_rate
-        self.model = model
         self.initial_capital = initial_capital
         self.max_buy = max_buy
         self.max_sell = max_sell
-        self.es = Deep_Evolution_Strategy(
-            self.model.get_weights(),
+
+        self.ohlcv_df = ohlcv_df
+        self.env = Environment(ohlcv_df, [{"name": "ema", "length":9}])
+        self.model = Model(self.env.dim * window_size, num_layers, layer_size, output_size)
+        self.stategy = Deep_Evolution_Strategy(
+            self.model.weights,
             self.get_reward,
-            self.POPULATION_SIZE,
-            self.SIGMA,
-            self.LEARNING_RATE,
+            population_size,
+            sigma,
+            learning_rate,
         )
 
-    def act(self, sequence):
-        decision, buy = self.model.predict(np.array(sequence))
+    def act(self, state: np.ndarray):
+        decision, amount = self.model.predict(state)
         try:
-            decision, buy = np.argmax(decision[0]), int(buy[0])
+            decision, amount = np.argmax(decision[0]), int(amount[0])
         except:
             return 0, 0
-        return decision, buy
+        return decision, amount
 
-    def get_reward(self, weights):
+    def get_reward(self, weights: np.ndarray) -> float:
         self.model.weights = weights
         balance = self.initial_capital
         position = 0
 
-        for time_index in range(0, self.length, self.skip):
-            if time_index < EMA_WINDOW:
-                continue
-            state = price_change_state(self.close, time_index, self.window_size + 1)
+        for time_index in range(0, self.env.length):
+            state = self.env.get_state(time_index, self.window_size)
             signal, amount = self.act(state)
             amount = int(np.around(amount))
             if amount < 1:
                 continue
-            current_price = self.close[time_index]
+            current_price = self.env.close[time_index]
             if signal == 1:
                 buy_units = min(amount, self.max_buy)
                 total_buy = buy_units * current_price
@@ -82,10 +81,7 @@ class Agent:
 
         return ((balance - self.initial_capital) / self.initial_capital) * 100
 
-    def fit(self, iterations, checkpoint):
-        return self.es.train(iterations)
-
-    def buy(self):
+    def simulate(self):
         balance = self.initial_capital
         buy_orders = pd.DataFrame(columns=["amount", "price"])
         buy_history = pd.DataFrame(columns=[
@@ -96,16 +92,16 @@ class Agent:
         ])
         position = 0
         actions = []
-        for time_index in range(0, self.length, self.skip):
+        for time_index in range(0, self.env.length):
             if time_index < self.window_size:
                 continue
-            state = price_change_state(self.close, time_index, self.window_size + 1)
+            state = self.env.get_state(time_index, self.window_size + 1)
             signal, amount = self.act(state)
             amount = int(np.around(amount))
             if amount < 1:
                 continue
             actions.append([signal, amount])
-            current_price = self.close[time_index]
+            current_price = self.env.close[time_index]
             if signal == 1:
                 buy_units = min(amount, self.max_buy)
                 total_buy = buy_units * current_price
@@ -149,7 +145,7 @@ class Agent:
                         break
                     
 
-                entry_capital = (entry_orders["amount"] * entry_orders["price"]).sum()
+                entry_capital = entry_orders["amount"].multiply(entry_orders["price"]).sum()
                 entry_price = entry_capital/entry_orders["amount"].sum()
                 try:
                     roi = ((total_sell - entry_capital) / entry_capital)* 100
@@ -167,4 +163,4 @@ class Agent:
                     "roi": roi
                 }
                 sell_history = sell_history.append(row, ignore_index=True)
-        return buy_history, sell_history, actions
+        return buy_history, sell_history
