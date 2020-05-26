@@ -10,7 +10,7 @@ EMA_WINDOW = 9
 def diff_percent(base: Series, other: Series) -> Series:
     return base.subtract(other, fill_value=0).divide(base, fill_value=0)
 
-class Environment:
+class Env:
     def __init__(
         self,
         ohlcv_df: DataFrame,
@@ -25,16 +25,16 @@ class Environment:
 
     def _state(
         self,
-        time_index,
-        window_size,
-        name,
+        time_index: int,
+        window_size: int,
+        name: str,
         **kwargs
     ) -> np.ndarray:
         super_state = diff_percent(self.close, getattr(self.ohlcv_df.ta, name)(**kwargs))
-        return super_state.loc[time_index+1-window_size:time_index+1].to_numpy()
+        return super_state.loc[time_index+2-window_size:time_index+1].to_numpy()
 
     def get_state(self, time_index: int, window_size: int) -> np.ndarray:
-        final = self.close.pct_change().loc[time_index+1-window_size:time_index+1].to_numpy(copy=True)
+        final = self.close.pct_change().loc[time_index+2-window_size:time_index+1].to_numpy(copy=True)
         states = np.array([
             self._state(
                 time_index,
@@ -42,4 +42,4 @@ class Environment:
                 **state_creator
             ) for state_creator in self.state_creators
         ])
-        return np.vstack(final, states).flatten()
+        return np.vstack((final, states)).flatten()

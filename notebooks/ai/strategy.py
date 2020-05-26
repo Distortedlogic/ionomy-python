@@ -39,8 +39,9 @@ class Deep_Evolution_Strategy:
             for layer in weights:
                 person_weights.append(np.random.randn(*layer.shape))
             pop_weights.append(person_weights)
-            for layer in bias:
+            for layer in bias[:-1]:
                 person_bias.append(np.random.randn(*layer.shape))
+            person_bias.append(np.random.randn())
             pop_bias.append(person_bias)
         return [pop_weights, pop_bias]
 

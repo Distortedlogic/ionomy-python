@@ -17,13 +17,19 @@ class Model:
         ]
 
     def build_feed(self, inputs) -> np.array:
-        feed = np.dot(inputs, self.weights[0]) + self.bias[0]
+        temp = np.dot(inputs, self.weights[0])
+        feed = temp + self.bias[0]
         for i in range(1, self.num_layers):
-            feed = np.dot(feed, self.weights[i]) + self.bias[i]
+            temp = np.dot(feed, self.weights[i])
+            feed = temp + self.bias[i]
         return feed
 
     def predict(self, inputs):
         feed = self.build_feed(inputs)
         decision = np.dot(feed, self.weights[-2]) + self.bias[-2]
-        buy = np.dot(feed, self.weights[-1]) + self.bias[-1]
-        return decision, buy
+        amount = np.dot(feed, self.weights[-1]) + self.bias[-1]
+        try:
+            return np.argmax(decision[0]), int(np.around(amount[0]))
+        except:
+            return 0, 0
+        

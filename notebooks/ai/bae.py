@@ -44,7 +44,7 @@ class Bae:
         learning_rate: float,
         num_layers: int,
         layer_size: int,
-        iterations: int
+        iterations: int = 100
     ):
         params = {
             "window_size": int(np.around(window_size)),
@@ -54,20 +54,17 @@ class Bae:
             "sigma": sigma,
             "learning_rate": learning_rate
         }
+        print(params)
         agent = Agent(self.df, **params, **self.config)
-        try:
-            agent.stategy.train(iterations)
-            return agent.stategy.reward_function(agent.stategy.weights)
-        except:
-            return 0
+        agent.stategy.train(iterations)
+        return agent.stategy.reward_function(agent.stategy.weights, agent.stategy.bias)
 
     def optimize(
         self,
         init_points: int = 30,
         n_iter: int = 50,
         acq: str = 'ei',
-        xi: float = 0.0,
-        iterations: int = 100
+        xi: float = 0.0
     ) -> None:
         NN_BAYESIAN = BayesianOptimization(
             self.simulate_rewards,
@@ -76,11 +73,10 @@ class Bae:
                 'population_size': (1, 50),
                 'sigma': (0.01, 0.99),
                 'learning_rate': (0.000001, 0.49),
-                'num_layers': (1, 10),
-                'layer_size': (10, 1000),
-                'iterations': iterations
+                'num_layers': (2, 10),
+                'layer_size': (2, 100)
             },
-            verbose=1
+            verbose=2
         )
         NN_BAYESIAN.maximize(init_points = init_points, n_iter = n_iter, acq = acq, xi = xi)
         params_df = pd.DataFrame.from_records([
@@ -96,7 +92,7 @@ class Bae:
         self.db.commit()
         self.bayes_params = params
 
-    def train(self, iterations: int = 500):
+    def train(self, iterations: int = 500) -> None:
         bayes_params = self.bayes_params | \
         self.db.query(
             AgentParams
@@ -113,7 +109,7 @@ class Bae:
         self.buy_history, self.sell_history = self.agent.simulate()
         return self.buy_history, self.sell_history
 
-    def plot(self):
+    def plot(self) -> None:
         plt.figure(figsize = (20, 10))
         plt.plot(self.agent.env.close, label = 'true close', c = 'g')
         buys = self.buy_history["time_index"].astype(int).to_list()

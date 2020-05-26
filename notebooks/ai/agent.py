@@ -4,11 +4,10 @@ import numpy as np
 import pandas as pd
 import pandas_ta as ta
 from pandas.core.frame import DataFrame
-from pandas.core.series import Series
 
 from .strategy import Deep_Evolution_Strategy
 from .model import Model
-from .environment import Environment
+from .environment import Env
 
 FEE_RATE = 0.003
 
@@ -33,33 +32,27 @@ class Agent:
         self.max_sell = max_sell
 
         self.ohlcv_df = ohlcv_df
-        self.env = Environment(ohlcv_df, [{"name": "ema", "length":9}])
+        self.env = Env(ohlcv_df, [{"name": "ema", "length":9}])
         self.model = Model(self.env.dim * window_size, num_layers, layer_size, output_size)
         self.stategy = Deep_Evolution_Strategy(
             self.model.weights,
+            self.model.bias,
             self.get_reward,
             population_size,
             sigma,
             learning_rate,
         )
 
-    def act(self, state: np.ndarray):
-        decision, amount = self.model.predict(state)
-        try:
-            decision, amount = np.argmax(decision[0]), int(amount[0])
-        except:
-            return 0, 0
-        return decision, amount
-
-    def get_reward(self, weights: np.ndarray) -> float:
+    def get_reward(self, weights: np.ndarray, bias: np.ndarray) -> float:
         self.model.weights = weights
+        self.model.bias = bias
         balance = self.initial_capital
         position = 0
-
-        for time_index in range(0, self.env.length):
+        for time_index in range(self.env.length):
+            if time_index < self.window_size:
+                continue
             state = self.env.get_state(time_index, self.window_size)
-            signal, amount = self.act(state)
-            amount = int(np.around(amount))
+            signal, amount = self.model.predict(state)
             if amount < 1:
                 continue
             current_price = self.env.close[time_index]
@@ -71,14 +64,12 @@ class Agent:
                 fee = FEE_RATE*total_buy
                 balance -= (total_buy + fee)
                 position += buy_units
-
             elif signal == 2 and position > 0:
                 sell_units = min(amount, position, self.max_sell)
                 position -= sell_units
                 total_sell = sell_units * current_price
                 fee = FEE_RATE*total_sell
                 balance += (total_sell - fee)
-
         return ((balance - self.initial_capital) / self.initial_capital) * 100
 
     def simulate(self):
@@ -92,12 +83,11 @@ class Agent:
         ])
         position = 0
         actions = []
-        for time_index in range(0, self.env.length):
+        for time_index in range(self.env.length):
             if time_index < self.window_size:
                 continue
             state = self.env.get_state(time_index, self.window_size + 1)
-            signal, amount = self.act(state)
-            amount = int(np.around(amount))
+            signal, amount = self.model.predict(state)
             if amount < 1:
                 continue
             actions.append([signal, amount])
@@ -110,7 +100,6 @@ class Agent:
                 fee = FEE_RATE*total_buy
                 balance -= (total_buy + fee)
                 position += buy_units
-
                 buy_order = {"amount": buy_units, "price": current_price}
                 buy_orders = buy_orders.append(buy_order, ignore_index=True)
                 row = {
@@ -128,7 +117,6 @@ class Agent:
                 total_sell = sell_units * current_price
                 fee = FEE_RATE*total_sell
                 balance += (total_sell - fee)
-
                 buy_orders.sort_values(by="price", ascending=True, inplace=True)
                 order_amount = sell_units
                 entry_orders = pd.DataFrame(columns=["amount", "price"])
@@ -143,15 +131,12 @@ class Agent:
                         order = {"amount": order_amount, "price": row["price"]}
                         entry_orders = entry_orders.append(order, ignore_index=True)
                         break
-                    
-
                 entry_capital = entry_orders["amount"].multiply(entry_orders["price"]).sum()
                 entry_price = entry_capital/entry_orders["amount"].sum()
                 try:
                     roi = ((total_sell - entry_capital) / entry_capital)* 100
                 except:
                     roi = 0
-
                 row = {
                     "time_index": time_index,
                     "amount": sell_units,
