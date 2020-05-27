@@ -3,20 +3,16 @@ from keras.layers.core import Dense
 from keras.layers.recurrent import SimpleRNN
 import numpy as np
 
+
 class Model:
     def __init__(self, input_dim, network_size, output_dim):
         self.model = Sequential()
-        self.model.add(SimpleRNN(
-            batch_input_shape=(1, 1, input_dim),
-            output_dim=network_size,
-            stateful=True,
-            activation="relu"
-        ))
-        self.model.add(Dense(input_dim=network_size, output_dim=output_dim, activation="softmax"))
+        self.model.add(Dense(input_dim=input_dim, units=network_size, activation="relu"))
+        self.model.add(Dense(input_dim=network_size, units=output_dim, activation="softmax"))
         self.model.compile(loss='mse', optimizer='rmsprop')
 
     def predict(self, inputs):
-        return self.model.predict(inputs)
+        return int(np.around(np.argmax(self.model.predict(np.array([inputs])))))
 
     def flatten(self):
         return np.concatenate([layer.flatten() for layer in self.model.get_weights()])

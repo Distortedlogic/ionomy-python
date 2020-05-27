@@ -6,7 +6,7 @@ alphaVantage-api
 bayesian-optimization
 seaborn
 sqlalchemy
-tensorflow
+tensorflow-gpu
 keras
 deap
 a

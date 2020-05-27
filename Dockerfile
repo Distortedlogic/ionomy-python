@@ -1,4 +1,7 @@
 FROM jupyter/minimal-notebook
+RUN add-apt-repository ppa:graphics-drivers
+RUN apt-get update
+RUN apt install nvidia-440
 USER root
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
