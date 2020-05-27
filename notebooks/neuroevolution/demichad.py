@@ -11,6 +11,7 @@ from .environment import Environment
 from .model import Model
 
 config = {
+    "iterations": 25,
     "initial_capital": 10_000,
     "max_buy": 0.1,
     "max_sell": 0.1,

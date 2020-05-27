@@ -19,6 +19,7 @@ class Bae:
     def __init__(
         self,
         ohlcv_df: DataFrame,
+        iterations: int,
         initial_capital: int,
         max_buy: float,
         max_sell: float,
@@ -27,6 +28,7 @@ class Bae:
         stats
     ) -> None:
         self.ohlcv_df = ohlcv_df
+        self.iterations = iterations
         self.chad_config = {
             "output_size": output_size,
             "toolbox": toolbox,
@@ -48,8 +50,7 @@ class Bae:
         sigma: float,
         indpb: float,
         cxpb: float,
-        mutpb: float,
-        iterations: int = 5
+        mutpb: float
     ):
         params = {
             "window_size": int(np.around(window_size)),
@@ -64,7 +65,7 @@ class Bae:
         }
         env = Environment(self.ohlcv_df, params["window_size"], **self.env_config)
         chad_army = ChadArmy(**params, env=env, **self.chad_config)
-        return chad_army.war(iterations)
+        return chad_army.war(self.iterations)
 
     def optimize(
         self,
