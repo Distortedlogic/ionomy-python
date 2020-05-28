@@ -1,13 +1,11 @@
 import json
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from bayes_opt import BayesianOptimization
 from pandas.core.frame import DataFrame
 
 from .chad_army import ChadArmy
-from .chad import Chad
 from .environment import Environment
 
 # from .schema import AgentParams, Base
@@ -97,5 +95,7 @@ class Bae:
         params["window_size"] = int(np.around(params['window_size']))
         params["size_network"] = int(np.around(params['size_network']))
         params["population_size"] = int(np.around(params['population_size']))
+        params["tournsize"] = int(np.around(params['tournsize']))
         print('Max Params:\n', json.dumps(params, indent=4))
+        self.params = params
         return params

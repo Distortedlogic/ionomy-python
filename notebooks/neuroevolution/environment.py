@@ -1,8 +1,4 @@
-from typing import Callable, Dict, List, Optional, Union
-
 import numpy as np
-import pandas as pd
-import pandas_ta as ta
 from pandas.core.frame import DataFrame
 from pandas.core.series import Series
 
@@ -19,7 +15,7 @@ class Environment:
         max_sell: float,
         length: float = 250
     ) -> None:
-        self.ohlcv_df = ohlcv_df.loc[-length:]
+        self.ohlcv_df = ohlcv_df
         self.close = self.ohlcv_df["close"]
         self.length = len(self.close) - 1
         self.window_size = window_size

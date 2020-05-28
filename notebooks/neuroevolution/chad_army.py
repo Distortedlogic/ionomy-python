@@ -1,11 +1,8 @@
-import random, multiprocessing
-from operator import attrgetter
+import random
 
 import numpy as np
-from deap import algorithms, base, creator, tools
-from pandas.core.frame import DataFrame
+from deap import algorithms, creator, tools
 
-from .model import Model
 from .environment import Environment
 from .chad import Chad
 
@@ -24,7 +21,8 @@ class ChadArmy:
         env: Environment,
         output_size: int,
         toolbox,
-        stats
+        fitness_stats,
+        lifespan_stats
     ) -> None:
         self.population_size = population_size
         self.tournsize = tournsize
@@ -34,9 +32,11 @@ class ChadArmy:
         self.cxpb = cxpb
         self.mutpb = mutpb
         self.history = tools.History()
+        self.env = env
         self.chad = Chad(network_size, output_size, env)
         self.nature = self.create_nature(toolbox)
-        self.stats = stats
+        self.fitness_stats = fitness_stats
+        self.lifespan_stats = lifespan_stats
 
     def create_nature(self, toolbox):
         try:
@@ -47,6 +47,8 @@ class ChadArmy:
             toolbox.unregister("select")
         except:
             pass
+        np.random.seed(42)
+        random.seed(42)
         toolbox.register(
             "individual",
             tools.initRepeat,
@@ -75,7 +77,7 @@ class ChadArmy:
 
     def war(self, ngen) -> float:
         logbook = tools.Logbook()
-        logbook.header = ['gen', 'nevals'] + (self.stats.fields)
+        logbook.header = ['gen', 'nevals'] + (self.fitness_stats.fields)  + (self.lifespan_stats.fields)
 
         # primordial ooze
         population = self.nature.population()
@@ -85,9 +87,10 @@ class ChadArmy:
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit
         self.halloffame.update(population)
-        record = self.stats.compile(population)
-        logbook.record(gen=0, nevals=len(invalid_ind), **record)
-        biggest_dick = record["max"]
+        fitness_record = self.fitness_stats.compile(population)
+        lifespan_record = self.lifespan_stats.compile(population)
+        logbook.record(gen=0, nevals=len(invalid_ind), **fitness_record, **lifespan_record)
+        chaddiest_chad = fitness_record["f_max"]
 
         for gen in range(1, ngen + 1):
             offspring = self.nature.select(population, len(population))
@@ -99,9 +102,10 @@ class ChadArmy:
                 ind.fitness.values = fit
             self.halloffame.update(offspring)
             population[:] = offspring
-            record = self.stats.compile(population)
-            logbook.record(gen=gen, nevals=len(invalid_ind), **record)
-            if record["max"] > biggest_dick:
-                biggest_dick = record["max"]
+            fitness_record = self.fitness_stats.compile(population)
+            lifespan_record = self.lifespan_stats.compile(population)
+            logbook.record(gen=gen, nevals=len(invalid_ind), **fitness_record, **lifespan_record)
+            if fitness_record["f_max"] >= chaddiest_chad:
+                self.omega = self.nature.clone(max(population, key=lambda ind: ind.fitness.values[0]))
             print(logbook.stream)
-        return biggest_dick
+        return chaddiest_chad

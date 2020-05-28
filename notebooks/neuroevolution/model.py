@@ -1,6 +1,5 @@
 from keras.models import Sequential
 from keras.layers.core import Dense
-from keras.layers.recurrent import SimpleRNN
 import numpy as np
 
 
