@@ -21,9 +21,9 @@ chad_config = {
     "window_size": 32,
     "network_size": 500,
     "population_size": 100,
-    "tournsize": 10,
-    "mu": 0.5,
-    "sigma": 0.5,
+    "tournsize": 25,
+    "mu": 0,
+    "sigma": 0.65,
     "indpb": 0.15,
     "cxpb": 0.3,
     "mutpb": 0.5,
@@ -48,15 +48,15 @@ class DemiChad:
         self.toolbox.register("map", multiprocessing.Pool().map)
         self.toolbox.register("attr_float", random.uniform, -2, 2)
         self.toolbox.register("mate", tools.cxTwoPoint)
-        self.fitness_stats = tools.Statistics(lambda ind: ind.fitness.values[0])
+        self.fitness_stats = tools.Statistics(lambda ind: ind.fitness.values[1])
         self.fitness_stats.register("f_avg", np.mean)
-        self.fitness_stats.register("f_std", np.std)
-        self.fitness_stats.register("f_min", np.min)
+        # self.fitness_stats.register("f_std", np.std)
+        # self.fitness_stats.register("f_min", np.min)
         self.fitness_stats.register("f_max", np.max)
-        self.lifespan_stats = tools.Statistics(lambda ind: ind.fitness.values[1])
+        self.lifespan_stats = tools.Statistics(lambda ind: ind.fitness.values[0])
         self.lifespan_stats.register("l_avg", np.mean)
-        self.lifespan_stats.register("l_std", np.std)
-        self.lifespan_stats.register("l_min", np.min)
+        # self.lifespan_stats.register("l_std", np.std)
+        # self.lifespan_stats.register("l_min", np.min)
         self.lifespan_stats.register("l_max", np.max)
     # def meta_evolve(self):
     #     return self.bae.optimize()

@@ -30,6 +30,7 @@ class Chad:
         model.set_weights(np.asarray(individual))
         balance = self.env.initial_capital
         position = 0
+        oldest_position = 0
 
         order_cols = ['time', "price", "amount"]
         orders = pd.DataFrame(columns=order_cols)
@@ -38,23 +39,23 @@ class Chad:
         sell_cols = ["time_index", "price", "amount", "balance", "fee", "position", "entry", "profit", "roi"]
         sell_history = pd.DataFrame(columns=sell_cols)
 
-        alive = True
         lifespan = 0
         num_trades = 0
         for time_index in range(self.env.window_size, self.env.length):
             lifespan = time_index
-            if balance < self.env.initial_capital/2 or position < 0:
-                alive = False
+            if time_index % 100 == 0 and num_trades < time_index // 100:
+                break
+            if balance < self.env.initial_capital/2 or position < 0 or position > 0.5:
                 break
             state = self.env.get_state(time_index)
-            signal = model.predict(state)
+            signal = model.predict(state, position, oldest_position)
             current_price = self.env.close[time_index]
             record = {"time_index": time_index, "price": current_price}
             if signal == 1:
                 buy_units = self.env.max_buy
                 total_buy = buy_units * current_price
                 if total_buy > balance:
-                    continue
+                    break
                 fee = FEE_RATE*total_buy
                 balance -= (total_buy + fee)
                 position += buy_units
@@ -65,7 +66,10 @@ class Chad:
                     ignore_index=True
                 )
                 num_trades += 1
-            elif signal == 2 and position > 0:
+            elif signal == 2:
+                if position <= 0:
+                    position -= self.env.max_sell
+                    continue
                 sell_units = min(position, self.env.max_sell)
                 record = {**record, "amount": sell_units}
                 total_sell = sell_units * current_price
@@ -101,13 +105,13 @@ class Chad:
                 num_trades += 1
             if not orders.empty:
                 for index, order in orders.iterrows():
-                    time, price, amount = itemgetter('time', 'price', 'amount')(order)
+                    time, amount = itemgetter('time', 'amount')(order)
                     if time_index - time > 24:
                         position -= amount
                         orders.drop(index)
-        if num_trades < 6:
-            alive = False
-            lifespan = 0
+                oldest_position = time_index - orders["time"].min()/24
+            else:
+                oldest_position = 0
         position_value = (1-HOLD_DISCOUNT) * position * self.env.close.iloc[-1]
         total = balance + position_value
         roi = (total - self.env.initial_capital)/self.env.initial_capital
@@ -123,7 +127,7 @@ class Chad:
         self.buy_history = buy_history
         self.sell_history = sell_history
         self.results = results
-        return roi if alive else -1, lifespan/self.env.length
+        return roi, lifespan
 
     def plot(self, buy_history, sell_history, results):
         print(results)

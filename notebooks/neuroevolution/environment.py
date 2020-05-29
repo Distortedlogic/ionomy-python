@@ -15,7 +15,7 @@ class Environment:
         max_sell: float,
         length: float = 250
     ) -> None:
-        self.ohlcv_df = ohlcv_df
+        self.ohlcv_df = ohlcv_df.iloc[length:].reset_index()
         self.close = self.ohlcv_df["close"]
         self.length = len(self.close) - 1
         self.window_size = window_size

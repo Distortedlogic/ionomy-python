@@ -77,7 +77,7 @@ class ChadArmy:
 
     def war(self, ngen) -> float:
         logbook = tools.Logbook()
-        logbook.header = ['gen', 'nevals'] + (self.fitness_stats.fields)  + (self.lifespan_stats.fields)
+        logbook.header = ['gen', 'nevals']  + (self.lifespan_stats.fields) + (self.fitness_stats.fields)
 
         # primordial ooze
         population = self.nature.population()
@@ -90,7 +90,7 @@ class ChadArmy:
         fitness_record = self.fitness_stats.compile(population)
         lifespan_record = self.lifespan_stats.compile(population)
         logbook.record(gen=0, nevals=len(invalid_ind), **fitness_record, **lifespan_record)
-        chaddiest_chad = fitness_record["f_max"]
+        chaddiest_chad = self.nature.clone(fitness_record["f_max"])
 
         for gen in range(1, ngen + 1):
             offspring = self.nature.select(population, len(population))
@@ -104,8 +104,9 @@ class ChadArmy:
             population[:] = offspring
             fitness_record = self.fitness_stats.compile(population)
             lifespan_record = self.lifespan_stats.compile(population)
-            logbook.record(gen=gen, nevals=len(invalid_ind), **fitness_record, **lifespan_record)
+            logbook.record(gen=gen, nevals=len(invalid_ind), **lifespan_record, **fitness_record)
             if fitness_record["f_max"] >= chaddiest_chad:
-                self.omega = self.nature.clone(max(population, key=lambda ind: ind.fitness.values[0]))
+                chaddiest_chad = self.nature.clone(max(population, key=lambda ind: ind.fitness.values[0]))
             print(logbook.stream)
+        self.omega = chaddiest_chad
         return chaddiest_chad

@@ -1,16 +1,19 @@
-from keras.models import Sequential
-from keras.layers.core import Dense
 import numpy as np
+from keras.layers.core import Dense
+from keras.layers.recurrent import LSTM
+from keras.models import Sequential
 
 
 class Model:
     def __init__(self, input_dim, network_size, output_dim):
         self.model = Sequential()
-        self.model.add(Dense(input_dim=input_dim, units=network_size, activation="relu"))
+        # self.model.add(LSTM(64, return_sequences=False, dropout=0.1, recurrent_dropout=0.1))
+        self.model.add(Dense(input_dim=input_dim+2, units=network_size, activation="relu"))
         self.model.add(Dense(input_dim=network_size, units=output_dim, activation="softmax"))
         self.model.compile(loss='mse', optimizer='rmsprop')
 
-    def predict(self, inputs):
+    def predict(self, state, position, oldest_position):
+        inputs = np.concatenate([state, [position], [oldest_position]])
         return int(np.around(np.argmax(self.model.predict(np.array([inputs])))))
 
     def flatten(self):
