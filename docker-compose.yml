@@ -1,5 +1,10 @@
 version: '3.7'
 services:
+    ngrok:
+        build: ./ngrok
+        container_name: ngrok
+        restart: unless-stopped
+        command: /bin/sh -c "ngrok authtoken ${ngrok_auth} && ngrok http notebook_server:8888 -subdomain=distortedlogic"
     notebook-server:
         build:
             context: .
