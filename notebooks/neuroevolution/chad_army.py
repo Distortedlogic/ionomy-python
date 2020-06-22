@@ -21,8 +21,7 @@ class ChadArmy:
         env: Environment,
         output_size: int,
         toolbox,
-        fitness_stats,
-        lifespan_stats
+        fitness_stats
     ) -> None:
         self.population_size = population_size
         self.tournsize = tournsize
@@ -36,7 +35,6 @@ class ChadArmy:
         self.chad = Chad(network_size, output_size, env)
         self.nature = self.create_nature(toolbox)
         self.fitness_stats = fitness_stats
-        self.lifespan_stats = lifespan_stats
 
     def create_nature(self, toolbox):
         try:
@@ -77,7 +75,7 @@ class ChadArmy:
 
     def war(self, ngen) -> float:
         logbook = tools.Logbook()
-        logbook.header = ['gen', 'nevals']  + (self.lifespan_stats.fields) + (self.fitness_stats.fields)
+        logbook.header = ['gen', 'nevals'] + (self.fitness_stats.fields)
 
         # primordial ooze
         population = self.nature.population()
@@ -88,9 +86,13 @@ class ChadArmy:
             ind.fitness.values = fit
         self.halloffame.update(population)
         fitness_record = self.fitness_stats.compile(population)
-        lifespan_record = self.lifespan_stats.compile(population)
-        logbook.record(gen=0, nevals=len(invalid_ind), **fitness_record, **lifespan_record)
-        chaddiest_chad = self.nature.clone(fitness_record["f_max"])
+        logbook.record(gen=0, nevals=len(invalid_ind), **fitness_record)
+        chad_f_max = -100
+        for ind in population:
+            f = ind.fitness.values[0]
+            if f >= chad_f_max:
+                chad_f_max = ind.fitness.values[0]
+                chaddiest_chad = self.nature.clone(ind)
 
         for gen in range(1, ngen + 1):
             offspring = self.nature.select(population, len(population))
@@ -103,10 +105,15 @@ class ChadArmy:
             self.halloffame.update(offspring)
             population[:] = offspring
             fitness_record = self.fitness_stats.compile(population)
-            lifespan_record = self.lifespan_stats.compile(population)
-            logbook.record(gen=gen, nevals=len(invalid_ind), **lifespan_record, **fitness_record)
-            if fitness_record["f_max"] >= chaddiest_chad:
-                chaddiest_chad = self.nature.clone(max(population, key=lambda ind: ind.fitness.values[0]))
+            logbook.record(gen=gen, nevals=len(invalid_ind), **fitness_record)
+
+            for ind in population:
+                f = ind.fitness.values[0]
+                if f <= 0:
+                    continue
+                if f >= chad_f_max:
+                    chad_f_max = ind.fitness.values[0]
+                    chaddiest_chad = self.nature.clone(ind)
             print(logbook.stream)
         self.omega = chaddiest_chad
-        return chaddiest_chad
+        return chaddiest_chad.fitness.values[0]

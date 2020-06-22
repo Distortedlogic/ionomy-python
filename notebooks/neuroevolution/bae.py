@@ -23,14 +23,14 @@ class Bae:
         max_sell: float,
         output_size: int,
         toolbox,
-        stats
+        fitness_stats
     ) -> None:
         self.ohlcv_df = ohlcv_df
         self.iterations = iterations
         self.chad_config = {
             "output_size": output_size,
             "toolbox": toolbox,
-            "stats": stats
+            "fitness_stats": fitness_stats
         }
         self.env_config = {
             "initial_capital": initial_capital,
@@ -76,7 +76,7 @@ class Bae:
             self.alpha_chad,
             {
                 'window_size': (2, 50),
-                "network_size": (10,1000),
+                "network_size": (10,500),
                 'population_size': (5, 100),
                 "tournsize": (3,20),
                 "mu": (-1, 1),

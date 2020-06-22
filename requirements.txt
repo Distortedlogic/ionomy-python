@@ -9,9 +9,9 @@ sqlalchemy
 tensorflow-gpu
 git+https://github.com/notadamking/tensortrade.git
 keras
-deap
-a
-
 stochastic
 plotly
 ccxt
+
+deap
+a

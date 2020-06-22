@@ -18,8 +18,8 @@ env_config = {
 }
 
 chad_config = {
-    "window_size": 32,
-    "network_size": 500,
+    "window_size": 8,
+    "network_size": 100,
     "population_size": 100,
     "tournsize": 25,
     "mu": 0,
@@ -38,36 +38,31 @@ bae_config = {
 class DemiChad:
     def __init__(self, ohlcv_df: DataFrame) -> None:
         self.ohlcv_df = ohlcv_df
-        creator.create("FitnessMulti", base.Fitness, weights=(1.0, 1.0))
+        creator.create("FitnessMulti", base.Fitness, weights=(1.0,))
         creator.create("Individual", list, fitness=creator.FitnessMulti)
         self.default_toolbox()
-        # self.bae = Bae(ohlcv_df, **env_config, **bae_config, toolbox=self.toolbox, stats=self.stats)
+        bae_config['toolbox'] = self.toolbox
+        bae_config['fitness_stats'] = self.fitness_stats
+        self.bae = Bae(ohlcv_df, **env_config, **bae_config)
         self.params = {}
     def default_toolbox(self):
         self.toolbox = base.Toolbox()
         self.toolbox.register("map", multiprocessing.Pool().map)
         self.toolbox.register("attr_float", random.uniform, -2, 2)
         self.toolbox.register("mate", tools.cxTwoPoint)
-        self.fitness_stats = tools.Statistics(lambda ind: ind.fitness.values[1])
+        self.fitness_stats = tools.Statistics(lambda ind: ind.fitness.values[0])
         self.fitness_stats.register("f_avg", np.mean)
-        # self.fitness_stats.register("f_std", np.std)
-        # self.fitness_stats.register("f_min", np.min)
         self.fitness_stats.register("f_max", np.max)
-        self.lifespan_stats = tools.Statistics(lambda ind: ind.fitness.values[0])
-        self.lifespan_stats.register("l_avg", np.mean)
-        # self.lifespan_stats.register("l_std", np.std)
-        # self.lifespan_stats.register("l_min", np.min)
-        self.lifespan_stats.register("l_max", np.max)
-    # def meta_evolve(self):
-    #     return self.bae.optimize()
+    def meta_evolve(self):
+        return self.bae.optimize()
     def evolve(self, ngen):
         params = self.params if self.params else chad_config
         self.env = Environment(self.ohlcv_df, **env_config, window_size=params["window_size"])
         army_params = {
-            "lifespan_stats": self.lifespan_stats,
-            "fitness_stats": self.fitness_stats
+            "fitness_stats": self.fitness_stats,
+            "toolbox": self.toolbox
         }
-        self.army = ChadArmy(**params, toolbox=self.toolbox, **army_params, env=self.env)
+        self.army = ChadArmy(**params, **army_params, env=self.env)
         return self.army.war(ngen)
     def omega(self):
         self.omega_chad = Chad(
