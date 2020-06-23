@@ -89,8 +89,7 @@ class ChadArmy:
         logbook.record(gen=0, nevals=len(invalid_ind), **fitness_record)
         chad_f_max = -100
         for ind in population:
-            f = ind.fitness.values[0]
-            if f >= chad_f_max:
+            if ind.fitness.values[0] >= chad_f_max:
                 chad_f_max = ind.fitness.values[0]
                 chaddiest_chad = self.nature.clone(ind)
 
