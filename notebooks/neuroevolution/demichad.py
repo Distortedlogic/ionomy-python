@@ -17,22 +17,33 @@ env_config = {
     "max_sell": 0.1
 }
 
-chad_config = {
-    "window_size": 8,
-    "network_size": 100,
+defaults = {
+    "window_size": 32,
+    "network_size": 400,
     "population_size": 100,
-    "tournsize": 25,
-    "mu": 0,
+    "tournsize": 15,
+    "mu": -0.25,
     "sigma": 0.65,
-    "indpb": 0.15,
-    "cxpb": 0.3,
-    "mutpb": 0.5,
-    "output_size": 3
+    "indpb": 0.05,
+    "cxpb": 0.6,
+    "mutpb": 0.7,
+    "output_size": 3,
+    "iterations": 25
 }
 
-bae_config = {
-    "iterations": 25,
-    "output_size": 3
+search_grid = {
+    "mu": (-0.25, 0.25),
+    'sigma': (0.5, 0.99),
+    "indpb": (0.05, 0.20),
+    "cxpb": (0.25, 0.75),
+    "mutpb": (0.25, 0.8)
+}
+
+opt_config = {
+    "init_points": 30,
+    "n_iter": 50,
+    "acq": 'ei',
+    "xi": 0.0
 }
 
 class DemiChad:
@@ -40,36 +51,44 @@ class DemiChad:
         self.ohlcv_df = ohlcv_df
         creator.create("FitnessMulti", base.Fitness, weights=(1.0,))
         creator.create("Individual", list, fitness=creator.FitnessMulti)
-        self.default_toolbox()
-        bae_config['toolbox'] = self.toolbox
-        bae_config['fitness_stats'] = self.fitness_stats
-        self.bae = Bae(ohlcv_df, **env_config, **bae_config)
-        self.params = {}
-    def default_toolbox(self):
-        self.toolbox = base.Toolbox()
-        self.toolbox.register("map", multiprocessing.Pool().map)
-        self.toolbox.register("attr_float", random.uniform, -2, 2)
-        self.toolbox.register("mate", tools.cxTwoPoint)
-        self.fitness_stats = tools.Statistics(lambda ind: ind.fitness.values[0])
-        self.fitness_stats.register("f_avg", np.mean)
-        self.fitness_stats.register("f_max", np.max)
-    def meta_evolve(self):
-        return self.bae.optimize()
-    def evolve(self, ngen):
-        params = self.params if self.params else chad_config
-        self.env = Environment(self.ohlcv_df, **env_config, window_size=params["window_size"])
-        army_params = {
-            "fitness_stats": self.fitness_stats,
-            "toolbox": self.toolbox
+        self.create_tools()
+        self.bae = Bae(
+            ohlcv_df,
+            env_config = env_config,
+            tools = self.tools,
+            defaults = defaults,
+            search_grid = search_grid
+        )
+    def create_tools(self):
+        toolbox = base.Toolbox()
+        toolbox.register("map", multiprocessing.Pool().map)
+        toolbox.register("attr_float", random.uniform, -2, 2)
+        toolbox.register("mate", tools.cxTwoPoint)
+        fitness_stats = tools.Statistics(lambda ind: ind.fitness.values[0])
+        fitness_stats.register("f_avg", np.mean)
+        fitness_stats.register("f_max", np.max)
+        self.tools = {
+            'toolbox': toolbox,
+            'fitness_stats': fitness_stats
         }
-        self.army = ChadArmy(**params, **army_params, env=self.env)
+    def meta_evolve(self):
+        self.bae.optimize(**opt_config)
+    def evolve(self, ngen):
+        params = self.bae.params if self.bae.params else defaults
+        self.env = Environment(self.ohlcv_df, **env_config, window_size=params["window_size"])
+        self.army = ChadArmy(**params, **self.tools, env=self.env)
         return self.army.war(ngen)
     def omega(self):
+        params = self.bae.params if self.bae.params else defaults
         self.omega_chad = Chad(
-            chad_config["network_size"],
-            chad_config["output_size"],
+            params["network_size"],
+            defaults["output_size"],
             env=self.env
         )
         self.omega_chad.fitness(self.army.omega)
     def plot(self):
-        self.omega_chad.plot(self.omega_chad.buy_history, self.omega_chad.sell_history, self.omega_chad.results)
+        self.omega_chad.plot(
+            self.omega_chad.buy_history,
+            self.omega_chad.sell_history,
+            self.omega_chad.results
+        )

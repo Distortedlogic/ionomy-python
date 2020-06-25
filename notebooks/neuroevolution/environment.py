@@ -10,14 +10,13 @@ def diff_percent(base: Series, other: Series) -> Series:
 class Environment:
     def __init__(
         self,
-        ohlcv_df: DataFrame,
+        df: DataFrame,
         window_size: int,
         initial_capital: int,
         max_buy: float,
         max_sell: float,
         length: float = 750
     ) -> None:
-        df = ohlcv_df.iloc[length:].reset_index()
         ema_10 = df.ta.ema(length=10).sub(df['close']).divide(df['close']).rename('ema_10')
         ema_50 = df.ta.ema(length=50).sub(df['close']).divide(df['close']).rename('ema_50')
         ema_100 = df.ta.ema(length=100).sub(df['close']).divide(df['close']).rename('ema_100')
@@ -25,19 +24,14 @@ class Environment:
         true_range = df.ta.true_range().divide(df['close']).rename('true_range')
         pct_change = df['close'].pct_change().rename('pct_change')
         self.df = pd.concat([pct_change, ema_10, ema_50, ema_100, ema_200, true_range], axis=1)
-        self.num_features = 6
-        self.close = df["close"]
+        self.df = self.df.iloc[length:].reset_index(drop=True)
+        self.num_features = len(self.df.columns)
+        self.close = df["close"].iloc[length:].reset_index(drop=True)
         self.length = len(self.close) - 1
         self.window_size = window_size
         self.initial_capital = initial_capital
         self.max_buy = max_buy
         self.max_sell = max_sell
-        self.config = {
-            "window_size": window_size,
-            "initial_capital": initial_capital,
-            "max_buy": max_buy,
-            "max_sell": max_sell
-        }
         
     def get_state(self, time_index: int) -> np.ndarray:
         return self.df.loc[time_index+2-self.window_size:time_index+1].to_numpy(copy=True).flatten()

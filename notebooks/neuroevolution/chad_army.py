@@ -21,7 +21,8 @@ class ChadArmy:
         env: Environment,
         output_size: int,
         toolbox,
-        fitness_stats
+        fitness_stats,
+        **kwargs
     ) -> None:
         self.population_size = population_size
         self.tournsize = tournsize
@@ -79,19 +80,14 @@ class ChadArmy:
 
         # primordial ooze
         population = self.nature.population()
-        self.halloffame = tools.HallOfFame(1)
+        self.hall_of_fame = tools.HallOfFame(1)
         invalid_ind = [ind for ind in population if not ind.fitness.valid]
         fitnesses = self.nature.map(self.nature.evaluate, invalid_ind)
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit
-        self.halloffame.update(population)
+        self.hall_of_fame.update(population)
         fitness_record = self.fitness_stats.compile(population)
         logbook.record(gen=0, nevals=len(invalid_ind), **fitness_record)
-        chad_f_max = -100
-        for ind in population:
-            if ind.fitness.values[0] >= chad_f_max:
-                chad_f_max = ind.fitness.values[0]
-                chaddiest_chad = self.nature.clone(ind)
 
         for gen in range(1, ngen + 1):
             offspring = self.nature.select(population, len(population))
@@ -101,18 +97,10 @@ class ChadArmy:
             fitnesses = self.nature.map(self.nature.evaluate, invalid_ind)
             for ind, fit in zip(invalid_ind, fitnesses):
                 ind.fitness.values = fit
-            self.halloffame.update(offspring)
+            self.hall_of_fame.update(offspring)
             population[:] = offspring
             fitness_record = self.fitness_stats.compile(population)
             logbook.record(gen=gen, nevals=len(invalid_ind), **fitness_record)
-
-            for ind in population:
-                f = ind.fitness.values[0]
-                if f <= 0:
-                    continue
-                if f >= chad_f_max:
-                    chad_f_max = ind.fitness.values[0]
-                    chaddiest_chad = self.nature.clone(ind)
             print(logbook.stream)
-        self.omega = chaddiest_chad
-        return chaddiest_chad.fitness.values[0]
+        self.omega = self.hall_of_fame[0]
+        return self.omega.fitness.values[0]
