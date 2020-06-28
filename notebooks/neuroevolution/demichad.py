@@ -79,16 +79,10 @@ class DemiChad:
         self.army = ChadArmy(**params, **self.tools, env=self.env)
         return self.army.war(ngen)
     def omega(self):
-        params = self.bae.params if self.bae.params else defaults
         self.omega_chad = Chad(
-            params["network_size"],
             defaults["output_size"],
             env=self.env
         )
         self.omega_chad.fitness(self.army.omega)
     def plot(self):
-        self.omega_chad.plot(
-            self.omega_chad.buy_history,
-            self.omega_chad.sell_history,
-            self.omega_chad.results
-        )
+        self.omega_chad.plot()

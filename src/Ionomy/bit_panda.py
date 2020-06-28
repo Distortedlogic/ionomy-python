@@ -183,9 +183,9 @@ class BitPanda(BitTrex):
             "InvalidAddress": "bool"
         })
 
-    def ohlcv(self, currency: str, base: str, time: str) -> DataFrame:
+    def ohlcv(self, currency: str, base: str, time: str, limit: int) -> DataFrame:
         df = pd.DataFrame.from_records(
-            super(BitPanda, self).ohlcv(currency, base, time)
+            super(BitPanda, self).ohlcv(currency, base, time, limit)
         ).drop(
             columns=['conversionType', 'conversionSymbol']
         ).rename(

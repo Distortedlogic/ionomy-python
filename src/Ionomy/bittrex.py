@@ -134,13 +134,32 @@ class BitTrex:
             params["currency"] = currency
         return self._request("/account/getdeposithistory", params)
 
-    def ohlcv(self, currency: str, base: str, time: str) -> List[Dict[str, Union[str, int, float]]]:
+    def ohlcv(self, currency: str, base: str, time: str, limit: int) -> List[Dict[str, Union[str, int, float]]]:
         if time not in ["minute", "hour", "day"]:
             raise Exception('time must be "minute", "hour", or "day"')
         HTTP = "https://min-api.cryptocompare.com/data"
+        if limit <= 2000:
+            params = {"fsym": currency, "tsym": base, "e": "BitTrex", "limit": limit}
+            resp = requests.get(HTTP + f"/v2/histo{time}", params=params).json()
+            if resp["Response"] == "Success":
+                return resp["Data"]["Data"]
+            else:
+                raise Exception(resp["Message"])
         params = {"fsym": currency, "tsym": base, "e": "BitTrex", "limit": 2000}
         resp = requests.get(HTTP + f"/v2/histo{time}", params=params).json()
         if resp["Response"] == "Success":
-            return resp["Data"]["Data"]
+            data = resp["Data"]["Data"]
         else:
             raise Exception(resp["Message"])
+        params['toTs'] = min(map(lambda x: x['time'], data))
+        while len(data) < limit:
+            if limit - len(data) < 2000:
+                params['limit'] = limit - len(data)
+            resp = requests.get(HTTP + f"/v2/histo{time}", params=params).json()
+            if resp["Response"] == "Success":
+                new_data = resp["Data"]["Data"]
+            else:
+                raise Exception(resp["Message"])
+            params['toTs'] = min(map(lambda x: x['time'], new_data))
+            data.extend(new_data)
+        return data

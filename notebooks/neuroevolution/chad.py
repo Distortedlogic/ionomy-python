@@ -1,11 +1,8 @@
-import json
-from math import exp
-from operator import itemgetter
-
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 import pandas as pd
-import scipy
+
+from math import sqrt
 from scipy.special import expit
 
 from .environment import Environment
@@ -17,30 +14,36 @@ HOLD_DISCOUNT = 0.05
 class Chad:
     def __init__(
         self,
-        network_size: int,
         output_size: int,
         env: Environment
     ) -> None:
         self.env = env
-        self.network_size = network_size
         self.output_size = output_size
-        self.one_per_hour_opt = self.env.length/12
-        self.max_x = -scipy.optimize.minimize(
-            self.num_trades_coeff,
-            0
-        ).fun
+        self.nt_opt = self.env.length/24
+        self.tf_opt = 24
 
     def num_trades_coeff(self, x):
-        return -1 * exp(x-x**2/self.one_per_hour_opt)
+        try:
+            coeff = sqrt(1 - (x - self.nt_opt) ** 2 / (self.nt_opt) ** 2)
+            return coeff
+        except:
+            return 0
+
+    def time_discount(self, t):
+        try:
+            coeff = sqrt(1 - t ** 2 / (2 * self.tf_opt) ** 2)
+            return coeff
+        except:
+            return 0
     
     def __len__(self):
-        return len(Model(self.env.window_size * self.env.num_features, self.network_size, self.output_size).flatten())
+        return len(Model((self.env.window_size, self.env.num_features, 1), self.output_size).flatten())
 
     def fitness(self, individual):
-        model = Model(self.env.window_size * self.env.num_features, self.network_size, self.output_size)
+        position = 0
+        model = Model((self.env.window_size, self.env.num_features, 1), self.output_size)
         model.set_weights(np.asarray(individual))
         balance = self.env.initial_capital
-        position = 0
 
         order_cols = ['time', "price", "amount"]
         orders = pd.DataFrame(columns=order_cols)
@@ -53,18 +56,12 @@ class Chad:
         num_trades = 0
         for time_index in range(self.env.window_size, self.env.length):
             state = self.env.get_state(time_index)
-            try:
-                signal = model.predict(state, position)
-            except Exception as e:
-                print(self.env.df.loc[time_index+2-self.env.window_size:time_index+1])
-                raise e
+            signal = model.predict(state)
             current_price = self.env.close[time_index]
             record = {"time_index": time_index, "price": current_price}
-            if signal == 1:
+            if signal == 1 and position <= 0.3:
                 buy_units = self.env.max_buy
                 total_buy = buy_units * current_price
-                if total_buy > balance:
-                    continue
                 fee = FEE_RATE*total_buy
                 balance -= (total_buy + fee)
                 position += buy_units
@@ -74,10 +71,7 @@ class Chad:
                     {'time':time_index, "price": current_price, "amount": buy_units},
                     ignore_index=True
                 )
-                num_trades += 1
-            elif signal == 2:
-                if position <= 0.09:
-                    continue
+            elif signal == 2 and position >= 0.09:
                 sell_units = min(position, self.env.max_sell)
                 record = {**record, "amount": sell_units}
                 total_sell = sell_units * current_price
@@ -88,7 +82,7 @@ class Chad:
                 order = orders.iloc[0]
                 entry_sum = order['price'] * order['amount']
                 orders = orders.iloc[1:]
-                time_discounted = 1 - expit(order['time'] - time_index - 24)
+                time_discounted = self.time_discount(time_index)
                 profit = (1 - 2 * FEE_RATE) * time_discounted * (total_sell - entry_sum)
                 total_profit += profit
                 roi = profit/entry_sum
@@ -105,19 +99,18 @@ class Chad:
             "position_value": position_value,
             "total": total,
             "roi": roi,
-            
         }
         self.buy_history = buy_history
         self.sell_history = sell_history
         self.results = results
-        return total_profit * -self.num_trades_coeff(num_trades)/self.max_x,
+        return total_profit * self.num_trades_coeff(num_trades),
 
-    def plot(self, buy_history, sell_history, results):
-        print(results)
+    def plot(self):
+        print(self.results)
         fig = plt.figure(figsize = (15,5))
         plt.plot(self.env.close, color='r', lw=2.)
-        buys = buy_history["time_index"].astype(int).to_list()
-        sells = sell_history["time_index"].astype(int).to_list()
+        buys = self.buy_history["time_index"].astype(int).to_list()
+        sells = self.sell_history["time_index"].astype(int).to_list()
         plt.plot(self.env.close, '^', markersize=10, color='m', label = 'buying signal', markevery = buys)
         plt.plot(self.env.close, 'v', markersize=10, color='k', label = 'selling signal', markevery = sells)
         plt.legend()

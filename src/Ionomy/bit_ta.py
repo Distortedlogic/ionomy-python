@@ -19,7 +19,7 @@ class BitTA(BitPanda):
     def __init__(self, api_key: str, secret_key: str) -> None:
         BitPanda.__init__(self, api_key, secret_key)
 
-    def update(self, currency: str, base: str, time: str):
+    def update(self, currency: str, base: str, time: str, limit: int):
         """Set the current ohlcv dataframe to the latest data with the given args
 
         Arguments:
@@ -27,7 +27,7 @@ class BitTA(BitPanda):
             base {str}
             time {str}
         """
-        self.df = self.ohlcv(currency, base, time)
+        self.df = self.ohlcv(currency, base, time, limit)
 
     """
     ========

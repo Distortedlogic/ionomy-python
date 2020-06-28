@@ -1,19 +1,32 @@
 import numpy as np
-from keras.layers.core import Dense
 from keras.layers.recurrent import LSTM
 from keras.models import Sequential
+from keras.layers import Dense, Dropout, Flatten
+from keras.layers import Conv2D, MaxPooling2D
 
 
 class Model:
-    def __init__(self, input_dim, network_size, output_dim):
+    def __init__(self, input_shape, output_dim):
+        # self.model = Sequential()
+        # self.model.add(Dense(input_dim=input_dim+1, units=network_size, activation="relu"))
+        # self.model.add(Dense(input_dim=network_size, units=output_dim, activation="softmax"))
+        # self.model.compile(loss='mse', optimizer='rmsprop')
+
         self.model = Sequential()
-        self.model.add(Dense(input_dim=input_dim+1, units=network_size, activation="relu"))
-        self.model.add(Dense(input_dim=network_size, units=output_dim, activation="softmax"))
+        self.model.add(Conv2D(
+            1,
+            kernel_size=(input_shape[1], input_shape[1]),
+            strides=(input_shape[1] + 1, 1),
+            activation='relu',
+            input_shape=input_shape
+        ))
+        self.model.add(Flatten())
+        self.model.add(Dense(128, activation='relu'))
+        self.model.add(Dense(output_dim, activation='softmax'))
         self.model.compile(loss='mse', optimizer='rmsprop')
 
-    def predict(self, state, position):
-        inputs = np.array([np.concatenate([state, [position]])])
-        return np.argmax(self.model.predict(inputs))
+    def predict(self, state):
+        return np.argmax(self.model.predict(np.expand_dims(np.expand_dims(state, axis=2), axis=0)))
 
     def flatten(self):
         return np.concatenate([layer.flatten() for layer in self.model.get_weights()])

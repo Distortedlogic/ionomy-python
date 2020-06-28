@@ -33,7 +33,7 @@ class ChadArmy:
         self.mutpb = mutpb
         self.history = tools.History()
         self.env = env
-        self.chad = Chad(network_size, output_size, env)
+        self.chad = Chad(output_size, env)
         self.nature = self.create_nature(toolbox)
         self.fitness_stats = fitness_stats
 
