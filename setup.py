@@ -6,7 +6,6 @@ with open("README.rst", "r") as fh:
 VERSION = '0.0.6'
 
 requires = [
-    'Click',
     'requests',
     'arrow',
     'furl',

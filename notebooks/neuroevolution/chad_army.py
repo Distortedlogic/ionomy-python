@@ -1,4 +1,5 @@
 import random
+import pickle
 
 import numpy as np
 from deap import algorithms, creator, tools
@@ -62,7 +63,7 @@ class ChadArmy:
             toolbox.individual,
             n=self.population_size
         )
-        toolbox.register("evaluate", self.chad.fitness)
+        toolbox.register("evaluate", self.chad.fitness, tf=self.env.window_size)
         toolbox.register(
             "mutate",
             tools.mutGaussian,
@@ -73,34 +74,69 @@ class ChadArmy:
         toolbox.register("select", tools.selTournament, tournsize=self.tournsize)
         return toolbox
         
+    def load(self):
+        with open("checkpoint.pkl", "r") as cp_file:
+            cp = pickle.load(cp_file)
+        return cp
+        
+
+    def checkpoint(self, cp):
+        with open("checkpoint.pkl", "wb") as cp_file:
+            pickle.dump(cp, cp_file)
+
+    def new_time_frame(self, tf):
+        self.nature.unregister("evaluate")
+        self.nature.register("evaluate", self.chad.fitness, tf=tf)
 
     def war(self, ngen) -> float:
-        logbook = tools.Logbook()
-        logbook.header = ['gen', 'nevals'] + (self.fitness_stats.fields)
-
-        # primordial ooze
-        population = self.nature.population()
-        self.hall_of_fame = tools.HallOfFame(1)
+        try:
+            cp = self.load()
+            population = cp["population"]
+            generation = cp["generation"]
+            time_frame = cp["time_frame"]
+            halloffame = cp["halloffame"]
+            logbook = cp["logbook"]
+            random.setstate(cp["rndstate"])
+        except:
+            logbook = tools.Logbook()
+            logbook.header = ['gen', 'nevals'] + (self.fitness_stats.fields)
+            population = self.nature.population()
+            halloffame = tools.HallOfFame(1)
+            time_frame = self.env.window_size
+            generation = 1
+        
         invalid_ind = [ind for ind in population if not ind.fitness.valid]
         fitnesses = self.nature.map(self.nature.evaluate, invalid_ind)
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit
-        self.hall_of_fame.update(population)
+        halloffame.update(population)
         fitness_record = self.fitness_stats.compile(population)
         logbook.record(gen=0, nevals=len(invalid_ind), **fitness_record)
 
-        for gen in range(1, ngen + 1):
-            offspring = self.nature.select(population, len(population))
-            offspring = map(self.nature.clone, offspring)
-            offspring = algorithms.varAnd(offspring, self.nature, self.cxpb, self.mutpb)
-            invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
-            fitnesses = self.nature.map(self.nature.evaluate, invalid_ind)
-            for ind, fit in zip(invalid_ind, fitnesses):
-                ind.fitness.values = fit
-            self.hall_of_fame.update(offspring)
-            population[:] = offspring
-            fitness_record = self.fitness_stats.compile(population)
-            logbook.record(gen=gen, nevals=len(invalid_ind), **fitness_record)
-            print(logbook.stream)
-        self.omega = self.hall_of_fame[0]
+        for tf in range(time_frame, self.env.length - 2000, 2000):
+            self.new_time_frame(tf)
+            for gen in range(generation, ngen + 1):
+                offspring = self.nature.select(population, len(population))
+                offspring = map(self.nature.clone, offspring)
+                offspring = algorithms.varAnd(offspring, self.nature, self.cxpb, self.mutpb)
+                invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
+                fitnesses = self.nature.map(self.nature.evaluate, invalid_ind)
+                for ind, fit in zip(invalid_ind, fitnesses):
+                    ind.fitness.values = fit
+                halloffame.update(offspring)
+                population[:] = offspring
+                fitness_record = self.fitness_stats.compile(population)
+                logbook.record(gen=gen, nevals=len(invalid_ind), **fitness_record)
+                print(logbook.stream)
+                if gen % 25 == 0:
+                    cp = dict(
+                        population=population,
+                        generation=gen,
+                        time_frame=tf,
+                        halloffame=halloffame,
+                        logbook=logbook,
+                        rndstate=random.getstate()
+                    )
+                    self.checkpoint(cp)
+        self.omega = halloffame[0]
         return self.omega.fitness.values[0]

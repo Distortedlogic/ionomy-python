@@ -8,7 +8,6 @@ from pandas.core.frame import DataFrame
 from .bae import Bae
 from .chad import Chad
 from .environment import Environment
-from .model import Model
 from .chad_army import ChadArmy
 
 env_config = {
@@ -83,6 +82,7 @@ class DemiChad:
             defaults["output_size"],
             env=self.env
         )
-        self.omega_chad.fitness(self.army.omega)
+        self.omega_chad.fitness(self.army.omega, tf=None)
+        self.omega_chad.brain.model.save('./chad')
     def plot(self):
         self.omega_chad.plot()
