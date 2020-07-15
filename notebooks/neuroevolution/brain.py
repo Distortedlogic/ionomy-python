@@ -8,10 +8,7 @@ from keras.layers import Conv2D, MaxPooling2D, Concatenate, Input
 class Brain:
     def __init__(self, input_shape, output_dim):
         input_size = input_shape[0] * input_shape[1] + 1
-        state_input = Input(
-            shape=input_size,
-            name="state"
-        )
+        state_input = Input(shape=input_size, name="state")
         hidden = Dense(input_size // 10, activation='relu')(state_input)
         action_pred = Dense(output_dim, activation='softmax')(hidden)
         self.model = Model(inputs = [state_input], outputs = [action_pred])

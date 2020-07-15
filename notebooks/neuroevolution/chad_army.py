@@ -75,10 +75,9 @@ class ChadArmy:
         return toolbox
         
     def load(self):
-        with open("checkpoint.pkl", "r") as cp_file:
+        with open("checkpoint.pkl", "rb") as cp_file:
             cp = pickle.load(cp_file)
         return cp
-        
 
     def checkpoint(self, cp):
         with open("checkpoint.pkl", "wb") as cp_file:
@@ -105,13 +104,13 @@ class ChadArmy:
             time_frame = self.env.window_size
             generation = 1
         
-        invalid_ind = [ind for ind in population if not ind.fitness.valid]
-        fitnesses = self.nature.map(self.nature.evaluate, invalid_ind)
-        for ind, fit in zip(invalid_ind, fitnesses):
-            ind.fitness.values = fit
-        halloffame.update(population)
-        fitness_record = self.fitness_stats.compile(population)
-        logbook.record(gen=0, nevals=len(invalid_ind), **fitness_record)
+            invalid_ind = [ind for ind in population if not ind.fitness.valid]
+            fitnesses = self.nature.map(self.nature.evaluate, invalid_ind)
+            for ind, fit in zip(invalid_ind, fitnesses):
+                ind.fitness.values = fit
+            halloffame.update(population)
+            fitness_record = self.fitness_stats.compile(population)
+            logbook.record(gen=0, nevals=len(invalid_ind), **fitness_record)
 
         for tf in range(time_frame, self.env.length - 2000, 2000):
             self.new_time_frame(tf)
