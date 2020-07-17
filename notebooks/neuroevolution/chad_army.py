@@ -139,3 +139,4 @@ class ChadArmy:
                     self.checkpoint(cp)
         self.omega = halloffame[0]
         return self.omega.fitness.values[0]
+        
