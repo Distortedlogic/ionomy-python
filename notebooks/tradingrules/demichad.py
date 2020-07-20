@@ -1,6 +1,7 @@
 import multiprocessing
 
 import numpy as np
+import matplotlib.pyplot as plt
 from deap import base, creator, tools
 
 from .environment import Environment
@@ -8,12 +9,12 @@ from .chad import Chad
 from .chad_army import ChadArmy
 
 defaults = {
-    'population_size': 100,
-    'tournsize': 25,
+    'population_size': 500,
+    'tournsize': 50,
     'mu': 0,
-    'sigma': 0.05,
-    'indpb': 0.1,
-    'cxpb': 0.4,
+    'sigma': 0.025,
+    'indpb': 0.05,
+    'cxpb': 0.6,
     'mutpb': 0.6
 }
 
@@ -51,3 +52,12 @@ class DemiChad:
     def plot(self):
         self.env.print(self.army.omega)
         self.omega_chad.plot()
+
+        # graph = networkx.DiGraph(self.army.history.genealogy_tree)
+        # graph = graph.reverse()
+        # colors = self.army.toolbox.map(
+        #     self.army.toolbox.evaluate,
+        #     (self.army.history.genealogy_history[i] for i in graph)
+        # )
+        # networkx.draw(graph, node_color=[color[0] for color in colors])
+        # plt.show()
