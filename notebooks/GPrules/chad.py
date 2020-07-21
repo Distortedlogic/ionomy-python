@@ -1,9 +1,11 @@
+import json
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+from deap import gp
 
 class Chad:
-    def __init__(self, toolbox, pset, df):
-        self.toolbox = toolbox
+    def __init__(self, pset, df):
         self.pset = pset
         self.df = df
     def fitness(self, individual):
@@ -14,10 +16,11 @@ class Chad:
         sell_cols = ["time_index", "price", "amount", "balance", "fee", "position", "entry", "profit", "roi"]
         sell_history = pd.DataFrame(columns=sell_cols)
 
-        signals = self.toolbox.compile(individual, self.pset)(self.df)
+        signals = gp.compile(individual, self.pset)(self.df)
 
         data = pd.concat([signals, self.df['close']], axis=1)
-        data = data[250:]
+        data = data[250:].reset_index(drop=True)
+        self.prices = data['close']
 
         position = 0
         initial_capital = 10_000
@@ -71,7 +74,7 @@ class Chad:
                 sell_history = sell_history.append(record, ignore_index=True)
                 num_trades += 1
 
-        total = balance + df.loc[-1:, 'close'] * position
+        total = balance + self.df['close'].iloc[-1] * position
         self.buy_history = buy_history
         self.sell_history = sell_history
         self.results = {
@@ -82,7 +85,19 @@ class Chad:
             "roi": np.round(total / initial_capital, decimals=3)
         }
         std = sell_history['profit'].std()
-        if num_trades < 10 or sell_history.empty or std == 0:
-            return -10 + num_trades,
+        if num_trades < 30 or sell_history.empty or std == 0:
+            return -30 + num_trades,
         SQN = (num_trades ** 0.5) * sell_history['profit'].mean() / std
         return SQN,
+
+    def plot(self):
+        print(json.dumps(self.results, indent=4))
+        fig = plt.figure(figsize = (15,5))
+        prices = self.prices
+        plt.plot(prices, color='r', lw=2.)
+        buys = self.buy_history["time_index"].astype(int).to_list()
+        sells = self.sell_history["time_index"].astype(int).to_list()
+        plt.plot(prices, '^', markersize=10, color='m', label = 'buying signal', markevery = buys)
+        plt.plot(prices, 'v', markersize=10, color='k', label = 'selling signal', markevery = sells)
+        plt.legend()
+        plt.show()

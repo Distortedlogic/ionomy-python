@@ -1,32 +1,24 @@
+from .rules.ret_types import bool_series, comparable_series, signals
 import pandas as pd
 
-def series_concat(u, v):
+def concat(u, v):
     return pd.concat([u.rename('buy'), v.rename('sell')], axis = 1)
 
-def series_and(u, v):
+def and_(u, v):
     return u & v
 
-def series_or(u, v):
+def or_(u, v):
     return u | v
 
-def series_not(u):
+def not_(u):
     return ~u
 
-def series_lt(u, v):
+def compare(u, v):
     return u.le(v)
 
-def series_lt_float(u, v):
-    return u < v
-
-def series_gt_float(u, v):
-    return u > v
-
-##################################################################################################
-
-def price(u):
-    return u['close']
-
-def percent_diff(u, v):
-    if u.eq(v['close']):
-        return u.pct_change()
-    return v['close'].substract(u).divide(v['close'])
+def add_operators(pset):
+    pset.addPrimitive(concat, [bool_series, bool_series], signals)
+    pset.addPrimitive(and_, [bool_series, bool_series], bool_series)
+    pset.addPrimitive(or_, [bool_series, bool_series], bool_series)
+    pset.addPrimitive(not_, [bool_series], bool_series)
+    pset.addPrimitive(compare, [comparable_series, comparable_series], bool_series)
