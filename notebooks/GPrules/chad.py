@@ -4,99 +4,128 @@ import numpy as np
 import matplotlib.pyplot as plt
 from deap import gp
 
+import matplotlib.pyplot as plt
+import networkx as nx
+from networkx.drawing.nx_agraph import graphviz_layout
+
 class Chad:
     def __init__(self, pset, df):
         self.pset = pset
         self.df = df
     def fitness(self, individual):
-        order_cols = ['time', "price", "amount"]
-        orders = pd.DataFrame(columns=order_cols)
-        buy_cols = ["time_index", "price", "amount", "balance", "fee"]
-        buy_history = pd.DataFrame(columns=buy_cols)
-        sell_cols = ["time_index", "price", "amount", "balance", "fee", "position", "entry", "profit", "roi"]
-        sell_history = pd.DataFrame(columns=sell_cols)
+        cols = [
+            "price",
+            "entry_time",
+            "entry",
+            "entry_fee",
+            "type",
+            "closed",
+            "exit",
+            "exit_time",
+            "profit"
+        ]
+        history = pd.DataFrame(columns=cols)
 
-        signals = gp.compile(individual, self.pset)(self.df)
+        try:
+            signals = gp.compile(individual, self.pset)(self.df)
+        except:
+            print(individual)
+            self.graph(ind=individual)
 
         data = pd.concat([signals, self.df['close']], axis=1)
         data = data[250:].reset_index(drop=True)
         self.prices = data['close']
 
         position = 0
-        initial_capital = 10_000
-        balance = 10_000
-        total_profit = 0
-        num_trades = 0
         max_buy = 0.1
         max_sell = 0.1
         FEE_RATE = 0.002
 
         for time_index, row in data.iterrows():
             current_price = row['close']
-            record = {"time_index": time_index, "price": current_price}
-            if row['buy'] and position <= 0.3:
-                buy_units = max_buy
-                total_buy = buy_units * current_price
-                fee = FEE_RATE * total_buy
-                balance -= (total_buy + fee)
-                position += buy_units
-                record = {**record, "balance": balance, "fee": fee, "amount": buy_units}
-                buy_history = buy_history.append(record, ignore_index=True)
-                orders = orders.append(
-                    {'time': time_index, "price": current_price, "amount": buy_units},
-                    ignore_index=True
-                )
-            elif row['sell'] and position >= 0.09:
-                sell_units = max_sell
-                record = {**record, "amount": sell_units}
-                total_sell = sell_units * current_price
-                fee = FEE_RATE * total_sell
-                balance += (total_sell - fee)
-                position -= sell_units
-                record = {
-                    **record,
-                    "fee": np.round(fee, decimals=3),
-                    "balance": np.round(balance, decimals=3),
-                    "position": np.round(position, decimals=3)
-                }
-                order = orders.iloc[0]
-                entry_sum = order['price'] * order['amount']
-                orders = orders.iloc[1:]
-                profit = (1 - 2 * FEE_RATE) * (total_sell - entry_sum)
-                total_profit += profit
-                record = {
-                    **record,
-                    "entry": np.round(order['price'], decimals=3),
-                    "profit": np.round(profit, decimals=3),
-                    'total_profit': np.round(total_profit, decimals=3),
-                    "roi": np.round(profit/entry_sum, decimals=3)
-                }
-                sell_history = sell_history.append(record, ignore_index=True)
-                num_trades += 1
-
-        total = balance + self.df['close'].iloc[-1] * position
-        self.buy_history = buy_history
-        self.sell_history = sell_history
-        self.results = {
-            "balance": np.round(balance, decimals=3),
-            "position": np.round(position, decimals=3),
-            "total": np.round(total, decimals=3),
-            "total_profit": np.round(total_profit, decimals=3),
-            "roi": np.round(total / initial_capital, decimals=3)
-        }
-        std = sell_history['profit'].std()
-        if num_trades < 30 or sell_history.empty or std == 0:
+            if row['buy'] and position <= 1:
+                total_buy = max_buy * current_price
+                position += max_buy
+                if history.empty or history['closed'].all():
+                    record = {
+                        "price": current_price,
+                        "entry_time": time_index,
+                        "entry": total_buy,
+                        "entry_fee": FEE_RATE * total_buy,
+                        "type": "long",
+                        "closed": False,
+                        "exit": None,
+                        "exit_time": None,
+                        "profit": None
+                    }
+                    history = history.append(record, ignore_index=True)
+                else:
+                    idx = history[history['closed'] == False].index[0]
+                    history.loc[idx, 'closed'] = True
+                    history.loc[idx, 'exit'] = total_buy
+                    history.loc[idx, 'exit_time'] = time_index
+                    row = history.loc[idx]
+                    history.loc[idx, 'profit'] = row['entry'] - total_buy
+            elif row['sell'] and position >= -1:
+                total_sell = max_sell * current_price
+                position -= max_sell
+                if history.empty or history['closed'].all():
+                    record = {
+                        "price": current_price,
+                        "entry_time": time_index,
+                        "entry": total_sell,
+                        "entry_fee": FEE_RATE * total_sell,
+                        "type": "short",
+                        "closed": False,
+                        "exit": None,
+                        "exit_time": None,
+                        "profit": None
+                    }
+                    history = history.append(record, ignore_index=True)
+                else:
+                    idx = history[history['closed'] == False].index[0]
+                    history.loc[idx, 'closed'] = True
+                    history.loc[idx, 'exit'] = total_sell
+                    history.loc[idx, 'exit_time'] = time_index
+                    row = history.loc[idx]
+                    history.loc[idx, 'profit'] = total_sell - row['entry']
+        self.history = history
+        history = history[history['closed']]
+        num_trades = len(history)
+        if num_trades < 30 or history.empty or history['profit'].std() == 0:
             return -30 + num_trades,
-        SQN = (num_trades ** 0.5) * sell_history['profit'].mean() / std
+        trade_durations = history['entry_time'].sub(history['exit_time'])
+        SQN = (num_trades ** 0.5) * history['profit'].mean() / history['profit'].std()
         return SQN,
+    
+    @staticmethod
+    def graph(ind):
+        plt.rcParams["figure.figsize"] = (50, 40)
+
+        nodes, edges, labels = gp.graph(ind)
+        g = nx.Graph()
+        g.add_nodes_from(nodes)
+        g.add_edges_from(edges)
+        pos = graphviz_layout(g)
+
+        nx.draw_networkx_nodes(g, pos, node_size=20000, node_color='grey')
+        nx.draw_networkx_edges(g, pos)
+        nx.draw_networkx_labels(g, pos, labels, font_size=50)
+        plt.savefig('real_test_run_1.png')
+        plt.show()
 
     def plot(self):
-        print(json.dumps(self.results, indent=4))
         fig = plt.figure(figsize = (15,5))
         prices = self.prices
         plt.plot(prices, color='r', lw=2.)
-        buys = self.buy_history["time_index"].astype(int).to_list()
-        sells = self.sell_history["time_index"].astype(int).to_list()
+        buys = pd.concat([
+            self.history.loc[(self.history['type'] == 'long') & ~(self.history['entry_time'].isnull()), 'entry_time'],
+            self.history.loc[(self.history['type'] == 'short') & ~(self.history['exit_time'].isnull()), 'exit_time']
+        ]).sort_values().astype(int).to_list()
+        sells = pd.concat([
+            self.history[self.history['type'] == 'long']['exit_time'],
+            self.history[self.history['type'] == 'short']['entry_time']
+        ]).sort_values().astype(int).to_list()
         plt.plot(prices, '^', markersize=10, color='m', label = 'buying signal', markevery = buys)
         plt.plot(prices, 'v', markersize=10, color='k', label = 'selling signal', markevery = sells)
         plt.legend()

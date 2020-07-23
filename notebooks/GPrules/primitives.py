@@ -8,6 +8,7 @@ from .operators import add_operators
 from .rules.price import add_price_rule, price_terminals
 from .rules.ema import add_ema_rule, ema_terminals
 from .rules.rsi import add_rsi_rule, rsi_terminals
+from .rules.filter import add_filter_rule, filter_terminals
 from .rules.ret_types import signals
 
 def build_pset():
@@ -18,8 +19,11 @@ def build_pset():
     add_price_rule(pset)
     add_rsi_rule(pset)
     add_ema_rule(pset)
+    add_filter_rule(pset)
 
-    terminal_types = [pandas.core.frame.DataFrame] + rsi_terminals + ema_terminals + price_terminals
+    terminal_types = [
+        pandas.core.frame.DataFrame
+    ] + filter_terminals + rsi_terminals + ema_terminals + price_terminals
 
     return pset, terminal_types
 

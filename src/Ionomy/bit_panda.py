@@ -195,4 +195,4 @@ class BitPanda(BitTrex):
             }
         )
         df['date'] = df['time'].apply(lambda ts: arrow.get(ts).format('YYYY-MM-DD'))
-        return df
+        return df.sort_values(by='time').reset_index(drop=True)
