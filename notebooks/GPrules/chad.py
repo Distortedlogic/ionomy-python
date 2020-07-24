@@ -8,6 +8,9 @@ import matplotlib.pyplot as plt
 import networkx as nx
 from networkx.drawing.nx_agraph import graphviz_layout
 
+from scipy.stats import kstest
+
+
 class Chad:
     def __init__(self, pset, df):
         self.pset = pset
@@ -43,7 +46,7 @@ class Chad:
 
         for time_index, row in data.iterrows():
             current_price = row['close']
-            if row['buy'] and position <= 1:
+            if row['buy']:
                 total_buy = max_buy * current_price
                 position += max_buy
                 if history.empty or history['closed'].all():
@@ -64,9 +67,9 @@ class Chad:
                     history.loc[idx, 'closed'] = True
                     history.loc[idx, 'exit'] = total_buy
                     history.loc[idx, 'exit_time'] = time_index
-                    row = history.loc[idx]
-                    history.loc[idx, 'profit'] = row['entry'] - total_buy
-            elif row['sell'] and position >= -1:
+                    trade = history.loc[idx]
+                    history.loc[idx, 'profit'] = trade['entry'] - total_buy
+            if row['sell']:
                 total_sell = max_sell * current_price
                 position -= max_sell
                 if history.empty or history['closed'].all():
@@ -87,15 +90,18 @@ class Chad:
                     history.loc[idx, 'closed'] = True
                     history.loc[idx, 'exit'] = total_sell
                     history.loc[idx, 'exit_time'] = time_index
-                    row = history.loc[idx]
-                    history.loc[idx, 'profit'] = total_sell - row['entry']
+                    trade = history.loc[idx]
+                    history.loc[idx, 'profit'] = total_sell - trade['entry']
         self.history = history
         history = history[history['closed']]
         num_trades = len(history)
         if num_trades < 30 or history.empty or history['profit'].std() == 0:
-            return -30 + num_trades,
-        trade_durations = history['entry_time'].sub(history['exit_time'])
-        SQN = (num_trades ** 0.5) * history['profit'].mean() / history['profit'].std()
+            return -99999 + num_trades,
+        root_avg_trade_duration = history['exit_time'].sub(history['entry_time']).mean() ** 0.5
+        times = pd.concat([history['entry_time'], history['exit_time'], pd.Series([0]), pd.Series([len(self.prices)])])
+        statistic, _ = kstest(times.to_list(), "uniform")
+        time_const = root_avg_trade_duration * statistic
+        SQN = time_const * (num_trades ** 0.5) * history['profit'].mean() / history['profit'].std()
         return SQN,
     
     @staticmethod
