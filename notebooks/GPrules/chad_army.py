@@ -15,59 +15,52 @@ class ChadArmy:
         self.toolbox = toolbox
         self.stats = stats
         self.round = 0
-    def log(self, pop, nevals, cast):
-        record = self.stats.compile(pop)
-        self.logbook.record(gen=self.gen, round=self.round, nevals=nevals, cast=cast, **record)
-        print(self.logbook.stream)
+
+    def load_pop(self, pop_size):
+        self.gen = 0
+        cp = self.load(f"init_pop_{pop_size}.pkl")
+        pop = cp["pop"]
+        if len(pop) != pop_size:
+            raise Exception
+        self.halloffame = cp["halloffame"]
+        self.logbook = cp["logbook"]
+        self.logbook.header = ['gen', "round", 'nevals', 'cast'] + (self.stats.fields)
+        random.setstate(cp["rndstate"])
+        self.graph(self.halloffame[0])
+        return pop
 
     def init_pop(self, pop_size):
-        random.seed(42)
-
+        random.seed(7)
         self.logbook = tools.Logbook()
         self.logbook.header = ['gen', 'round', 'nevals', 'cast'] + (self.stats.fields)
         self.halloffame = tools.HallOfFame(1)
-
         pop = self.toolbox.population(n=pop_size)
         self.evaluate_pop(pop, "Init")
-
+        pop = self.apply_func(pop, self.shrink_mut, "Shrink", 5)
         cp = dict(
             pop=pop,
             halloffame=self.halloffame,
             logbook=self.logbook,
             rndstate=random.getstate()
         )
-        self.checkpoint(cp, "init_pop.pkl")
-        self.halloffame.update(pop)
-        self.graph(self.halloffame[0])
+        self.checkpoint(cp, f"init_pop_{pop_size}.pkl")
         return pop
+
     def war(self, ngen, pop_size):
         try:
-            self.gen = 0
-            cp = self.load("init_pop.pkl")
-            pop = cp["pop"]
-            if len(pop) != pop_size:
-                raise Exception
-            self.halloffame = cp["halloffame"]
-            self.logbook = cp["logbook"]
-            self.logbook.header = ['gen', "round", 'nevals', 'cast'] + (self.stats.fields)
-            random.setstate(cp["rndstate"])
-            self.halloffame.update(pop)
-            self.graph(self.halloffame[0])
+            pop = self.load_pop(pop_size)
         except Exception as e:
             print(e)
             pop = self.init_pop(pop_size)
-
         for self.gen in range(1, ngen + 1):
             self.round = 1
-            # pop = self.apply_func(pop, self.node_mut, "Node")
-            pop = self.apply_func(pop, self.ephem_mut, "Ephem", epochs=10)
-            if self.gen % 10 == 0:
-                pop = self.apply_func(pop, self.mate, "Mate")
-                best = [self.toolbox.clone(ind) for ind in self.toolbox.selBest(pop, len(pop) // 10)]
-                pop = self.toolbox.selTournament(pop, len(pop) - len(pop) // 10, tournsize=2) + best
-                pop = self.keep_best_apply(pop, len(pop) // 10, self.uniform_mut, "Uniform")
-            if self.gen % 25 == 0:
-                pop = self.apply_func(pop, self.shrink_mut, "Shrink")
+            # pop = self.apply_func(pop, self.node_mut, "Node", 10)
+            pop = self.apply_func(pop, self.ephem_mut, "Ephem", 10)
+            pop = self.apply_func(pop, self.shrink_mut, "Shrink", 5)
+            pop = self.apply_func(pop, self.mate, "Mate", 5)
+            best = [self.toolbox.clone(ind) for ind in self.toolbox.selBest(pop, len(pop) // 10)]
+            pop = self.toolbox.selTournament(pop, len(pop) - len(pop) // 10, tournsize=2) + best
+            pop = self.keep_best_apply(pop, len(pop) // 10, self.uniform_mut, "Uniform")
             if self.gen % 5 == 0:
                 pop = self.toolbox.selTournament(pop, len(pop), tournsize=2)
                 cp = dict(
@@ -79,7 +72,40 @@ class ChadArmy:
                 )
                 self.checkpoint(cp, f"checkpoints/pop_{self.gen}.pkl")
         self.omega = self.halloffame[0]
-    
+
+    def log(self, pop, nevals, cast):
+        record = self.stats.compile(pop)
+        self.logbook.record(gen=self.gen, round=self.round, nevals=nevals, cast=cast, **record)
+        print(self.logbook.stream)
+
+    def evaluate_pop(self, pop, cast):
+        invalid_ind = [ind for ind in pop if not ind.fitness.valid]
+        fitnesses = self.toolbox.map(self.toolbox.evaluate, invalid_ind)
+        for ind, fit in zip(invalid_ind, fitnesses):
+            ind.fitness.values = fit
+        self.log(pop, len(invalid_ind), cast)
+        try:
+            prev = self.halloffame[0]
+        except:
+            self.halloffame.update(pop)
+            self.graph(self.halloffame[0])
+        else:
+            self.halloffame.update(pop)
+            if prev != self.halloffame[0]:
+                self.chad.fitness(self.halloffame[0])
+                self.chad.plot()
+                self.graph(self.halloffame[0])
+
+    def apply_func(self, pop, func, cast, epochs):
+        for _ in range(epochs):
+            offspring = [self.toolbox.clone(ind) for ind in pop]
+            offspring = func(offspring)
+            self.evaluate_pop(offspring, cast)
+            pop = self.best_of_two(offspring, pop)
+            self.log(pop, 0, "best_of_two")
+            self.round += 1
+        return pop
+
     @staticmethod
     def better(competitors):
         ind1, ind2 = competitors
@@ -97,44 +123,15 @@ class ChadArmy:
         self.evaluate_pop(offspring, cast)
         return self.toolbox.selBest(offspring, len(offspring) - keep_best) + best
 
-    def evaluate_pop(self, pop, cast):
-        invalid_ind = [ind for ind in pop if not ind.fitness.valid]
-        fitnesses = self.toolbox.map(self.toolbox.evaluate, invalid_ind)
-        for ind, fit in zip(invalid_ind, fitnesses):
-            ind.fitness.values = fit
-        self.log(pop, len(invalid_ind), cast)
-        try:
-            prev = self.halloffame[0]
-        except:
-            pass
-        else:
-            self.halloffame.update(pop)
-            if prev != self.halloffame[0]:
-                self.chad.fitness(self.halloffame[0])
-                self.chad.plot()
-                self.graph(self.halloffame[0])
-
-    def apply_func(self, pop, func, cast, epochs = 5):
-        for _ in range(epochs):
-            offspring = [self.toolbox.clone(ind) for ind in pop]
-            offspring = func(offspring)
-            self.evaluate_pop(offspring, cast)
-            pop = self.best_of_two(offspring, pop)
-            self.log(pop, 0, "best_of_two")
-            self.round += 1
-        return pop
-
     def graph(self, ind=None):
         if not ind:
             ind = self.omega
         plt.rcParams["figure.figsize"] = (45, 40)
-
         nodes, edges, labels = gp.graph(ind)
         g = nx.Graph()
         g.add_nodes_from(nodes)
         g.add_edges_from(edges)
         pos = graphviz_layout(g)
-
         nx.draw_networkx_nodes(g, pos, node_size=20000, node_color='grey')
         nx.draw_networkx_edges(g, pos)
         nx.draw_networkx_labels(g, pos, labels, font_size=50)

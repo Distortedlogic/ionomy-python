@@ -23,15 +23,24 @@ def generate_safe(pset, min_, max_, terminal_types, type_=None):
             try:
                 # Might not be respected if there is a type without terminal args
                 if height <= depth or (depth >= min_ and random.random() < pset.terminalRatio):
-                    primitives_with_only_terminal_args = [p for p in pset.primitives[type_] if
-                                                          all([arg in terminal_types for arg in p.args])]
+                    primitives_with_only_terminal_args = [
+                        p for p in pset.primitives[type_] if
+                        all([arg in terminal_types for arg in p.args])
+                    ]
 
                     if len(primitives_with_only_terminal_args) == 0:
                         prim = random.choice(pset.primitives[type_])
                     else:
                         prim = random.choice(primitives_with_only_terminal_args)
                 else:
-                    prim = random.choice(pset.primitives[type_])
+                    primitives_without_terminal_args = [
+                        p for p in pset.primitives[type_] if
+                        all([arg not in terminal_types for arg in p.args])
+                    ]
+                    if len(primitives_without_terminal_args) == 0:
+                        prim = random.choice(pset.primitives[type_])
+                    else:
+                        prim = random.choice(primitives_without_terminal_args)
             except IndexError:
                 _, _, traceback = sys.exc_info()
                 raise IndexError("The gp.generate function tried to add "

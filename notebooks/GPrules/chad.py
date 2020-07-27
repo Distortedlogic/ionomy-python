@@ -17,23 +17,22 @@ class Chad:
         self.df = df
     def fitness(self, individual):
         cols = [
-            "price",
-            "entry_time",
             "entry",
+            "exit",
             "entry_fee",
             "type",
             "closed",
-            "exit",
+            "entry_time",
             "exit_time",
             "profit"
         ]
         history = pd.DataFrame(columns=cols)
 
-        try:
-            signals = gp.compile(individual, self.pset)(self.df)
-        except:
-            print(individual)
-            self.graph(ind=individual)
+        # try:
+        signals = gp.compile(individual, self.pset)(self.df)
+        # except:
+        #     print(individual)
+        #     self.graph(ind=individual)
 
         data = pd.concat([signals, self.df['close']], axis=1)
         data = data[250:].reset_index(drop=True)
@@ -51,7 +50,6 @@ class Chad:
                 position += max_buy
                 if history.empty or history['closed'].all():
                     record = {
-                        "price": current_price,
                         "entry_time": time_index,
                         "entry": total_buy,
                         "entry_fee": FEE_RATE * total_buy,
@@ -67,6 +65,7 @@ class Chad:
                     history.loc[idx, 'closed'] = True
                     history.loc[idx, 'exit'] = total_buy
                     history.loc[idx, 'exit_time'] = time_index
+                    history.loc[idx, 'exit_fee'] = FEE_RATE * total_buy
                     trade = history.loc[idx]
                     history.loc[idx, 'profit'] = trade['entry'] - total_buy
             if row['sell']:
@@ -74,7 +73,6 @@ class Chad:
                 position -= max_sell
                 if history.empty or history['closed'].all():
                     record = {
-                        "price": current_price,
                         "entry_time": time_index,
                         "entry": total_sell,
                         "entry_fee": FEE_RATE * total_sell,
@@ -90,6 +88,7 @@ class Chad:
                     history.loc[idx, 'closed'] = True
                     history.loc[idx, 'exit'] = total_sell
                     history.loc[idx, 'exit_time'] = time_index
+                    history.loc[idx, 'exit_fee'] = FEE_RATE * total_sell
                     trade = history.loc[idx]
                     history.loc[idx, 'profit'] = total_sell - trade['entry']
         self.history = history
@@ -101,7 +100,11 @@ class Chad:
         times = pd.concat([history['entry_time'], history['exit_time'], pd.Series([0]), pd.Series([len(self.prices)])])
         statistic, _ = kstest(times.to_list(), "uniform")
         time_const = root_avg_trade_duration * statistic
-        SQN = time_const * (num_trades ** 0.5) * history['profit'].mean() / history['profit'].std()
+        mean_profit = history['profit'].mean()
+        amplifier = time_const * (num_trades ** 0.5) / history['profit'].std()
+        if mean_profit < 0:
+            amplifier = 1/amplifier
+        SQN = amplifier * mean_profit
         return SQN,
     
     @staticmethod
@@ -129,8 +132,8 @@ class Chad:
             self.history.loc[(self.history['type'] == 'short') & ~(self.history['exit_time'].isnull()), 'exit_time']
         ]).sort_values().astype(int).to_list()
         sells = pd.concat([
-            self.history[self.history['type'] == 'long']['exit_time'],
-            self.history[self.history['type'] == 'short']['entry_time']
+            self.history.loc[(self.history['type'] == 'long') & ~(self.history['exit_time'].isnull()), 'exit_time'],
+            self.history.loc[(self.history['type'] == 'short') & ~(self.history['entry_time'].isnull()), 'entry_time']
         ]).sort_values().astype(int).to_list()
         plt.plot(prices, '^', markersize=10, color='m', label = 'buying signal', markevery = buys)
         plt.plot(prices, 'v', markersize=10, color='k', label = 'selling signal', markevery = sells)

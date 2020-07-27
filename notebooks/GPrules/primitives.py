@@ -13,7 +13,7 @@ from .rules.ret_types import signals
 
 def build_pset():
     pset = gp.PrimitiveSetTyped("MAIN", [DataFrame], signals)
-    pset.renameArguments(ARG0="df")
+    pset.renameArguments(ARG0="ohlcv")
 
     add_operators(pset)
     add_price_rule(pset)

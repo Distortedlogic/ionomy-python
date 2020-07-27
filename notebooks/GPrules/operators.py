@@ -2,7 +2,9 @@ from .rules.ret_types import bool_series, comparable_series, signals
 import pandas as pd
 
 def concat(u, v):
-    return pd.concat([u.rename('buy'), v.rename('sell')], axis = 1)
+    signal = pd.concat([u.rename('buy'), v.rename('sell')], axis = 1)
+    signal = signal.where(~(signal['buy'] & signal['sell']).astype(bool), other=0)
+    return signal[(signal['buy'] == True) | (signal['sell'] == True)]
 
 def and_(u, v):
     return u & v
