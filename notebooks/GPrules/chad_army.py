@@ -1,6 +1,5 @@
 from os import stat
-import pickle
-import random
+import pickle, time, random
 
 from deap import tools, gp
 
@@ -24,19 +23,17 @@ class ChadArmy:
             raise Exception
         self.halloffame = cp["halloffame"]
         self.logbook = cp["logbook"]
-        self.logbook.header = ['gen', "round", 'nevals', 'cast'] + (self.stats.fields)
         random.setstate(cp["rndstate"])
-        self.graph(self.halloffame[0])
+        self.full_stats()
         return pop
 
     def init_pop(self, pop_size):
-        random.seed(7)
+        random.seed(5)
         self.logbook = tools.Logbook()
-        self.logbook.header = ['gen', 'round', 'nevals', 'cast'] + (self.stats.fields)
+        self.logbook.header = ['gen', 'round', 'nevals', 'runtime', 'cast'] + (self.stats.fields)
         self.halloffame = tools.HallOfFame(1)
         pop = self.toolbox.population(n=pop_size)
         self.evaluate_pop(pop, "Init")
-        pop = self.apply_func(pop, self.shrink_mut, "Shrink", 5)
         cp = dict(
             pop=pop,
             halloffame=self.halloffame,
@@ -54,31 +51,64 @@ class ChadArmy:
             pop = self.init_pop(pop_size)
         for self.gen in range(1, ngen + 1):
             self.round = 1
-            # pop = self.apply_func(pop, self.node_mut, "Node", 10)
-            pop = self.apply_func(pop, self.ephem_mut, "Ephem", 10)
-            pop = self.apply_func(pop, self.shrink_mut, "Shrink", 5)
-            pop = self.apply_func(pop, self.mate, "Mate", 5)
-            best = [self.toolbox.clone(ind) for ind in self.toolbox.selBest(pop, len(pop) // 10)]
-            pop = self.toolbox.selTournament(pop, len(pop) - len(pop) // 10, tournsize=2) + best
-            pop = self.keep_best_apply(pop, len(pop) // 10, self.uniform_mut, "Uniform")
-            if self.gen % 5 == 0:
-                pop = self.toolbox.selTournament(pop, len(pop), tournsize=2)
-                cp = dict(
+            if self.gen > 25 and  self.gen % 5 == 0:
+                self.toolbox.selDoubleTournament(pop, len(pop))
+            else:
+                self.toolbox.selTournament(pop, len(pop), tournsize=15)
+            pop = self.standard_step(pop, 0.5, 0.7)
+            self.checkpoint(
+                dict(
                     pop=pop,
                     halloffame=self.halloffame,
                     logbook=self.logbook,
                     gen=self.gen,
                     rndstate=random.getstate()
-                )
-                self.checkpoint(cp, f"checkpoints/pop_{self.gen}.pkl")
+                ), f"checkpoints/pop_{self.gen}.pkl"
+            )
         self.omega = self.halloffame[0]
+
+    def standard_step(self, pop, cxpb, mutpb):
+        offspring = [self.toolbox.clone(ind) for ind in pop]
+        for i in range(1, len(offspring), 2):
+            if random.random() < cxpb:
+                offspring[i - 1], offspring[i] = self.toolbox.mate(offspring[i - 1],
+                                                            offspring[i])
+                del offspring[i - 1].fitness.values, offspring[i].fitness.values
+
+        for i in range(len(offspring)):
+            if random.random() < mutpb:
+                if random.random() < 0.3:
+                    offspring[i], = self.toolbox.mutEphemeral_rand(offspring[i])
+                else:
+                    offspring[i], = self.toolbox.mutUniform(offspring[i])
+                del offspring[i].fitness.values
+        self.evaluate_pop(offspring, "S")
+        return offspring
+
+    def custom_step(self, pop):
+        # pop = self.apply_func(pop, self.node_mut, "Node", 10)
+        pop = self.apply_func(pop, self.ephem_mut, "Ephem", 10)
+        pop = self.apply_func(pop, self.shrink_mut, "Shrink", 5)
+        pop = self.apply_func(pop, self.mate, "Mate", 5)
+        best = [self.toolbox.clone(ind) for ind in self.toolbox.selBest(pop, len(pop) // 10)]
+        pop = self.toolbox.selTournament(pop, len(pop) - len(pop) // 10, tournsize=2) + best
+        pop = self.keep_best_apply(pop, len(pop) // 10, self.uniform_mut, "Uniform")
+        return pop
 
     def log(self, pop, nevals, cast):
         record = self.stats.compile(pop)
-        self.logbook.record(gen=self.gen, round=self.round, nevals=nevals, cast=cast, **record)
+        mins, secs = divmod(int(time.time() - self.start_time), 60)
+        self.logbook.record(
+            gen=self.gen,
+            round=self.round,
+            nevals=nevals,
+            runtime=f'{mins} mins {secs} secs',
+            cast=cast,
+            **record)
         print(self.logbook.stream)
 
     def evaluate_pop(self, pop, cast):
+        self.start_time = time.time()
         invalid_ind = [ind for ind in pop if not ind.fitness.valid]
         fitnesses = self.toolbox.map(self.toolbox.evaluate, invalid_ind)
         for ind, fit in zip(invalid_ind, fitnesses):
@@ -88,13 +118,11 @@ class ChadArmy:
             prev = self.halloffame[0]
         except:
             self.halloffame.update(pop)
-            self.graph(self.halloffame[0])
+            self.full_stats()
         else:
             self.halloffame.update(pop)
             if prev != self.halloffame[0]:
-                self.chad.fitness(self.halloffame[0])
-                self.chad.plot()
-                self.graph(self.halloffame[0])
+                self.full_stats()
 
     def apply_func(self, pop, func, cast, epochs):
         for _ in range(epochs):
@@ -138,6 +166,14 @@ class ChadArmy:
         plt.savefig('real_test_run_1.png')
         plt.show()
 
+    def full_stats(self):
+        self.chad.fitness(self.halloffame[0], full_stats=True)
+        self.chad.plot_ec()
+        self.chad.profit_bar()
+        self.chad.print_results()
+        self.chad.plot_trades()
+        self.graph(self.halloffame[0])
+        self.chad.print_history()
     def load(self, path):
         with open(path, "rb") as cp_file:
             cp = pickle.load(cp_file)

@@ -3,7 +3,7 @@ import random
 import pandas_ta as ta
 
 from pandas.core.frame import DataFrame
-from .ret_types import bool_series, comparable_series
+from .ret_types import bool_series, comparable_series, filterable_series
 
 class vwap_offset:
     pass
@@ -35,5 +35,5 @@ def add_price_rule(pset):
     pset.addPrimitive(price, [DataFrame], comparable_series)
     pset.addPrimitive(vwap, [DataFrame, vwap_offset], comparable_series)
 
-    pset.addPrimitive(percent_diff_lt, [DataFrame, diff_lower], bool_series)
-    pset.addPrimitive(percent_diff_gt, [DataFrame, diff_upper], bool_series)
+    pset.addPrimitive(percent_diff_lt, [DataFrame, diff_lower], filterable_series)
+    pset.addPrimitive(percent_diff_gt, [DataFrame, diff_upper], filterable_series)

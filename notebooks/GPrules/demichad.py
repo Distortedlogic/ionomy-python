@@ -16,49 +16,8 @@ from .chad import Chad
 from .chad_army import ChadArmy
 from .primitives import build_pset
 from .utils.safe_gen import generate_safe
-
-from inspect import isclass
-def mutInsert(individual, pset):
-    """Inserts a new branch at a random position in *individual*. The subtree
-    at the chosen position is used as child node of the created subtree, in
-    that way, it is really an insertion rather than a replacement. Note that
-    the original subtree will become one of the children of the new primitive
-    inserted, but not perforce the first (its position is randomly selected if
-    the new primitive has more than one child).
-
-    :param individual: The normal or typed tree to be mutated.
-    :returns: A tuple of one tree.
-    """
-    index = random.randrange(len(individual))
-    node = individual[index]
-    slice_ = individual.searchSubtree(index)
-    choice = random.choice
-
-    # As we want to keep the current node as children of the new one,
-    # it must accept the return value of the current node
-    primitives = [p for p in pset.primitives[node.ret] if node.ret in p.args]
-
-    if len(primitives) == 0:
-        return individual,
-
-    new_node = choice(primitives)
-    new_subtree = [None] * len(new_node.args)
-    position = choice([i for i, a in enumerate(new_node.args) if a == node.ret])
-
-    print(new_node.args)
-    for i, arg_type in enumerate(new_node.args):
-        if i != position:
-            print(arg_type)
-            print(pset.terminals)
-            term = choice(pset.terminals[arg_type])
-            if isclass(term):
-                term = term()
-            new_subtree[i] = term
-
-    new_subtree[position:position + 1] = individual[slice_]
-    new_subtree.insert(0, new_node)
-    individual[slice_] = new_subtree
-    return individual,
+from .utils.mutNodeReplacement import mutNodeReplacement
+from .utils.mutInsert import mutInsert
 
 def mutEphemeral_rand(individual):
     ephemerals_idx = [
@@ -101,17 +60,18 @@ class DemiChad:
         toolbox.register("selBest", tools.selBest)
         toolbox.register("mate", gp.cxOnePointLeafBiased, termpb=0.1)
         toolbox.register("mutUniform", gp.mutUniform, expr=toolbox.expr, pset=pset)
-        toolbox.register("mutNodeReplacement", gp.mutNodeReplacement, pset=pset)
-        toolbox.register("mutEphemeral", gp.mutEphemeral)
+        toolbox.register("mutNodeReplacement", mutNodeReplacement, pset=pset)
+        toolbox.register("mutEphemeral", gp.mutEphemeral, mode='all')
         toolbox.register("mutEphemeral_rand", mutEphemeral_rand)
         toolbox.register("mutInsert", mutInsert)
         toolbox.register("mutShrink", gp.mutShrink)
 
-        toolbox.decorate("mate", gp.staticLimit(key=operator.attrgetter("height"), max_value=20))
-        toolbox.decorate("mutUniform", gp.staticLimit(key=operator.attrgetter("height"), max_value=20))
-        toolbox.decorate("mutNodeReplacement", gp.staticLimit(key=operator.attrgetter("height"), max_value=20))
-        toolbox.decorate("mutEphemeral", gp.staticLimit(key=operator.attrgetter("height"), max_value=20))
-        toolbox.decorate("mutEphemeral_rand", gp.staticLimit(key=operator.attrgetter("height"), max_value=20))
+        max_height = 20
+        toolbox.decorate("mate", gp.staticLimit(key=operator.attrgetter("height"), max_value=max_height))
+        toolbox.decorate("mutUniform", gp.staticLimit(key=operator.attrgetter("height"), max_value=max_height))
+        toolbox.decorate("mutNodeReplacement", gp.staticLimit(key=operator.attrgetter("height"), max_value=max_height))
+        toolbox.decorate("mutEphemeral", gp.staticLimit(key=operator.attrgetter("height"), max_value=max_height))
+        toolbox.decorate("mutEphemeral_rand", gp.staticLimit(key=operator.attrgetter("height"), max_value=max_height))
 
         stats = tools.Statistics(lambda ind: ind.fitness.values)
         stats.register("avg", np.mean)
@@ -127,10 +87,6 @@ class DemiChad:
         self.army = ChadArmy(self.chad, self.pset, self.toolbox, self.stats)
         self.army.war(ngen, pop_size)
         self.chad.fitness(self.army.omega)
-
-    def plot(self):
-        print(self.army.omega)
-        self.chad.plot()
 
     def graph(self):
         self.army.graph()
