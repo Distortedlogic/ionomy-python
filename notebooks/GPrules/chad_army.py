@@ -51,10 +51,10 @@ class ChadArmy:
             pop = self.init_pop(pop_size)
         for self.gen in range(1, ngen + 1):
             self.round = 1
-            if self.gen > 25 and  self.gen % 5 == 0:
-                self.toolbox.selDoubleTournament(pop, len(pop))
+            if self.gen > 10 and self.gen % 5 == 0:
+                self.toolbox.selDoubleTournament(pop, len(pop), fitness_size=100)
             else:
-                self.toolbox.selTournament(pop, len(pop), tournsize=15)
+                self.toolbox.selTournament(pop, len(pop), tournsize=100)
             pop = self.standard_step(pop, 0.5, 0.7)
             self.checkpoint(
                 dict(

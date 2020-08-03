@@ -30,6 +30,13 @@ def mutEphemeral_rand(individual):
 
     return individual,
 
+def gt_zero(pop):
+    chosen = []
+    for i in range(len(pop)):
+        if pop[i].fitness.values[0] > 0:
+            chosen.append(pop[i])
+    return chosen
+
 class DemiChad:
     def __init__(self, df: DataFrame):
         self.df = df
@@ -53,7 +60,6 @@ class DemiChad:
         toolbox.register(
             "selDoubleTournament",
             tools.selDoubleTournament,
-            fitness_size=25,
             parsimony_size=1.4,
             fitness_first=True
         )

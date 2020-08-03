@@ -213,8 +213,8 @@ class Chad:
         lower = int(self.mean_profit - 3 * self.std_profit)
         upper = int(self.mean_profit + 3 * self.std_profit)
         step = int(self.std_profit) // 3
-        bins = range(lower, upper, step)
-        cuts = pd.qcut(profits, bins=bins, include_lowest=True)
+        bins = sorted(list(range(lower, upper, step)) + [0])
+        cuts = pd.cut(profits, bins=bins, include_lowest=True)
         ax = cuts.value_counts(sort=False).plot.bar(rot=0, color="b", figsize=(15,5))
         plt.xticks(rotation=90)
         plt.savefig('profit_bar.png')
