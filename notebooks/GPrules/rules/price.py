@@ -20,6 +20,12 @@ def price(u):
 def vwap(u, vwap_offset):
     return u.ta.vwap(offset=vwap_offset)
 
+def percent_diff_vwap_lt(u, vwap_offset, diff_lower):
+    return u['close'].sub(u.ta.vwap(offset=vwap_offset)).divide(u['close']) < diff_lower
+
+def percent_diff_vwap_gt(u, vwap_offset, diff_upper):
+    return u['close'].sub(u.ta.vwap(offset=vwap_offset)).divide(u['close']) > diff_upper
+
 def percent_diff_lt(u, diff_lower):
     return u['close'].pct_change() < diff_lower
 
@@ -37,3 +43,6 @@ def add_price_rule(pset):
 
     pset.addPrimitive(percent_diff_lt, [DataFrame, diff_lower], filterable_series)
     pset.addPrimitive(percent_diff_gt, [DataFrame, diff_upper], filterable_series)
+
+    pset.addPrimitive(percent_diff_vwap_lt, [DataFrame, vwap_offset, diff_lower], filterable_series)
+    pset.addPrimitive(percent_diff_vwap_gt, [DataFrame, vwap_offset, diff_upper], filterable_series)

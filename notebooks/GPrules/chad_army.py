@@ -27,8 +27,15 @@ class ChadArmy:
         self.full_stats()
         return pop
 
+    def filter_positives(self, pop):
+        filtered = []
+        selected = self.toolbox.fitness_gt(pop)
+        while len(filtered) < len(pop):
+            filtered.append(self.toolbox.clone(selected))
+        return pop[:len(pop)]
+
     def init_pop(self, pop_size):
-        random.seed(5)
+        random.seed(7)
         self.logbook = tools.Logbook()
         self.logbook.header = ['gen', 'round', 'nevals', 'runtime', 'cast'] + (self.stats.fields)
         self.halloffame = tools.HallOfFame(1)
@@ -51,11 +58,12 @@ class ChadArmy:
             pop = self.init_pop(pop_size)
         for self.gen in range(1, ngen + 1):
             self.round = 1
-            if self.gen > 10 and self.gen % 5 == 0:
-                self.toolbox.selDoubleTournament(pop, len(pop), fitness_size=100)
-            else:
-                self.toolbox.selTournament(pop, len(pop), tournsize=100)
             pop = self.standard_step(pop, 0.5, 0.7)
+            if self.gen > 10 and self.gen % 5 == 0:
+                pop = self.toolbox.selDoubleTournament(pop, len(pop), fitness_size=len(pop)//5)
+            else:
+                pop = self.toolbox.selTournament(pop, len(pop), tournsize=len(pop)//5)
+                # pop = self.filter_positives(pop)
             self.checkpoint(
                 dict(
                     pop=pop,
@@ -71,8 +79,10 @@ class ChadArmy:
         offspring = [self.toolbox.clone(ind) for ind in pop]
         for i in range(1, len(offspring), 2):
             if random.random() < cxpb:
-                offspring[i - 1], offspring[i] = self.toolbox.mate(offspring[i - 1],
-                                                            offspring[i])
+                offspring[i - 1], offspring[i] = self.toolbox.mate(
+                    offspring[i - 1],
+                    offspring[i]
+                )
                 del offspring[i - 1].fitness.values, offspring[i].fitness.values
 
         for i in range(len(offspring)):

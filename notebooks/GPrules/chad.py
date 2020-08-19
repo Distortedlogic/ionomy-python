@@ -67,8 +67,8 @@ class Chad:
         hold_time_index = -1
 
         for time_index, row in signals.iterrows():
-            if time_index < hold_time_index:
-                continue
+            # if time_index < hold_time_index:
+            #     continue
             current_price = row['close']
             if row['buy'] and position >= -1 and position < 1:
                 total_buy = max_buy * current_price
@@ -146,6 +146,8 @@ class Chad:
             amplifier = 1/amplifier
         self.SQN = amplifier * self.mean_profit
         if full_stats:
+            self.history['hold_time'] = history['exit_time'].sub(history['entry_time'])
+            self.avg_hold_time = self.history['hold_time'].mean()
             self.avg_ROI = history['profit'].divide(history['entry']).mean()
             self.amplifier = amplifier
             self.num_trades = num_trades
@@ -214,14 +216,15 @@ class Chad:
         upper = int(self.mean_profit + 3 * self.std_profit)
         step = int(self.std_profit) // 3
         bins = sorted(list(range(lower, upper, step)) + [0])
-        cuts = pd.cut(profits, bins=bins, include_lowest=True)
+        cuts = pd.cut(profits, bins=bins, include_lowest=True, duplicates='drop')
         ax = cuts.value_counts(sort=False).plot.bar(rot=0, color="b", figsize=(15,5))
         plt.xticks(rotation=90)
         plt.savefig('profit_bar.png')
         plt.show()
 
     def print_history(self):
-        print(self.history[['entry', 'exit', 'type', 'entry_time', 'exit_time', 'profit', 'closed']])
+        with pd.option_context('display.max_rows', None, 'display.max_columns', None):
+            IPython.display.display(self.history)
 
     def print_results(self):
         try:
@@ -251,7 +254,8 @@ class Chad:
                 "closed_ratio": self.closed_ratio,
                 "mean_entry_time_diff": self.mean_entry_time_diff,
                 "trade_duration": self.trade_duration,
-                "trade_time_coeff": self.trade_time_coeff
+                "trade_time_coeff": self.trade_time_coeff,
+                "Average Hold Time": self.avg_hold_time
             }
             self.hof_log = self.hof_log.append(record, ignore_index=True)
             with pd.option_context('display.max_rows', None, 'display.max_columns', None):

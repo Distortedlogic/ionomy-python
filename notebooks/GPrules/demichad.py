@@ -30,10 +30,10 @@ def mutEphemeral_rand(individual):
 
     return individual,
 
-def gt_zero(pop):
+def fitness_gt(pop, limit):
     chosen = []
     for i in range(len(pop)):
-        if pop[i].fitness.values[0] > 0:
+        if pop[i].fitness.values[0] > limit:
             chosen.append(pop[i])
     return chosen
 
@@ -64,6 +64,7 @@ class DemiChad:
             fitness_first=True
         )
         toolbox.register("selBest", tools.selBest)
+        toolbox.register("fitness_gt", fitness_gt)
         toolbox.register("mate", gp.cxOnePointLeafBiased, termpb=0.1)
         toolbox.register("mutUniform", gp.mutUniform, expr=toolbox.expr, pset=pset)
         toolbox.register("mutNodeReplacement", mutNodeReplacement, pset=pset)
@@ -72,7 +73,7 @@ class DemiChad:
         toolbox.register("mutInsert", mutInsert)
         toolbox.register("mutShrink", gp.mutShrink)
 
-        max_height = 20
+        max_height = 30
         toolbox.decorate("mate", gp.staticLimit(key=operator.attrgetter("height"), max_value=max_height))
         toolbox.decorate("mutUniform", gp.staticLimit(key=operator.attrgetter("height"), max_value=max_height))
         toolbox.decorate("mutNodeReplacement", gp.staticLimit(key=operator.attrgetter("height"), max_value=max_height))
