@@ -1,0 +1,14 @@
+{
+  "include": ["src"],
+
+  "exclude": ["**/node_modules", "**/__pycache__", "src/typestubs"],
+  "useLibraryCodeForTypes": true,
+  "typeCheckingMode": "off",
+  "venvPath": "C:\\ProgramData\\Anaconda3\\envs\\ion",
+
+  "reportMissingImports": true,
+  "reportMissingTypeStubs": false,
+
+  "pythonVersion": "3.8",
+  "pythonPlatform": "Linux"
+}

@@ -1,4 +1,14 @@
 {
     "restructuredtext.confPath": "${workspaceFolder}\\docs",
-    "python.pythonPath": "C:\\Users\\jerme\\anaconda3\\envs\\ion\\python.exe"
+    "python.pythonPath": "C:\\ProgramData\\Anaconda3\\envs\\ion\\python.exe",
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true,
+    "python.linting.banditEnabled": false,
+    "python.linting.pycodestyleEnabled": false,
+    "python.autoComplete.extraPaths": [
+        "${workspaceFolder}/src"
+    ],
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/src"
+    ]
 }
