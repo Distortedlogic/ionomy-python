@@ -1,4 +1,4 @@
-transformers == 2.3.0
+transformers == 4.30.0
 pandas == 1.0.0
 numpy == 1.18.1
 matplotlib == 3.1.3
